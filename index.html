@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi CAT CPNS Bagian 13</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; margin: 0; height: 100dvh; display: flex; flex-direction: column; }
+        .header-bkn { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .progress-bar-container { flex-grow: 1; margin: 0 40px; display: flex; flex-direction: column; align-items: flex-end; }
+        .progress-bar-bg { width: 100%; height: 8px; background-color: rgba(255,255,255,0.25); border-radius: 9999px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background-color: #facc15; width: 0%; transition: width 0.4s cubic-bezier(0.4,0,0.2,1); }
+        .timer-bkn-container { background-color: #fef2f2; border: 1px solid #fee2e2; border-radius: 8px; padding: 4px 10px; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        @keyframes flipHourglass { 0%,25%{transform:rotate(0deg);} 40%,75%{transform:rotate(180deg);} 90%,100%{transform:rotate(360deg);} }
+        .animate-hourglass { animation: flipHourglass 4s infinite ease-in-out; transform-origin:center; color:#2563eb; }
+        .timer-bkn-text { color:#dc2626; font-weight:800; font-size:1.1rem; line-height:1; letter-spacing:0.5px; }
+        .btn-selesai-header { background-color:#ef4444; color:white; padding:6px 14px; border-radius:9999px; font-weight:700; font-size:0.85rem; transition:all .2s; box-shadow:0 4px 6px -1px rgba(239,68,68,0.4); }
+        .btn-selesai-header:hover { background-color:#b91c1c; transform:translateY(-1px); }
+        #exam-container { display:flex; flex-direction:column; flex-grow:1; overflow:hidden; }
+        .main-content-wrapper { display:flex; flex-grow:1; overflow:hidden; }
+        .sidebar-nav { width:300px; flex-shrink:0; background-color:#f1f5f9; display:flex; flex-direction:column; padding:20px 16px; height:100%; border-right:1px solid #e2e8f0; order:1; }
+        .nav-grid-wrapper { background-color:white; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.05); padding:16px 12px; overflow-y:auto; flex-grow:1; border:1px solid #e2e8f0; }
+        .nav-grid-bkn { display:grid; grid-template-columns:repeat(auto-fill,minmax(42px,1fr)); gap:8px; }
+        .nav-btn-bkn { height:42px; width:100%; border-radius:8px; border:1px solid #ef4444; font-weight:700; font-size:14px; cursor:pointer; color:white; display:flex; align-items:center; justify-content:center; background-color:#ef4444; transition:all .15s; }
+        .nav-btn-bkn:hover { background-color:#dc2626; }
+        .nav-btn-bkn.answered { background-color:#10b981; border-color:#10b981; }
+        .nav-btn-bkn.answered:hover { background-color:#059669; }
+        .nav-btn-bkn.current { background-color:#facc15; color:#1e293b; border-color:#facc15; box-shadow:0 0 0 3px rgba(250,204,21,0.35); }
+        .question-area { flex-grow:1; padding:32px 48px; overflow-y:auto; background-color:white; display:flex; flex-direction:column; order:2; }
+        .question-box { background-color:#f8fafc; border:1px solid #e2e8f0; border-left:5px solid #3b82f6; padding:24px; border-radius:12px; margin-bottom:24px; font-size:1.1rem; line-height:1.75; color:#1e293b; }
+        .options-list { display:flex; flex-direction:column; gap:14px; }
+        .option-item { display:flex; align-items:flex-start; padding:16px 20px; border:1.5px solid #e2e8f0; border-radius:12px; cursor:pointer; transition:all .2s cubic-bezier(0.4,0,0.2,1); }
+        .option-item:hover { background-color:#f8fafc; border-color:#cbd5e1; transform:translateX(4px); }
+        .option-item input[type="radio"] { display:none; }
+        .option-letter { width:32px; height:32px; border-radius:50%; background-color:#e2e8f0; color:#475569; display:flex; align-items:center; justify-content:center; font-weight:700; margin-right:18px; flex-shrink:0; transition:all .2s; margin-top:2px; }
+        .option-text { font-size:1.02rem; color:#334155; line-height:1.5; flex-grow:1; }
+        .option-item.selected { border-color:#3b82f6; background-color:#eff6ff; box-shadow:0 4px 6px -1px rgba(59,130,246,0.1); }
+        .option-item.selected .option-letter { background-color:#3b82f6; color:white; }
+        .action-buttons { display:flex; flex-direction:row; gap:16px; margin-top:24px; }
+        .btn-simpan, .btn-lewatkan { flex:1; justify-content:center; white-space:nowrap; }
+        .result-progress-container { width:100%; background-color:#e2e8f0; border-radius:9999px; height:10px; margin-top:12px; position:relative; overflow:hidden; }
+        .result-passing-line { position:absolute; top:0; bottom:0; width:2px; background-color:#ef4444; z-index:10; }
+        .fig-badge { background:#0ea5e9; color:white; font-size:10px; font-weight:800; padding:2px 8px; border-radius:9999px; display:inline-block; margin-bottom:8px; letter-spacing:.05em; }
+        @media (max-width:1024px){ .sidebar-nav{width:250px;} .question-area{padding:24px;} .progress-bar-container{margin:0 20px;} }
+        @media (max-width:768px){
+            .main-content-wrapper{flex-direction:column;}
+            .sidebar-nav{width:100%;height:auto;max-height:135px;border-right:none;border-top:1px solid #e2e8f0;padding:6px 12px;order:2;}
+            .nav-grid-wrapper{padding:6px 8px;}
+            .question-area{padding:16px;order:1;}
+            .nav-grid-bkn{grid-template-columns:repeat(auto-fill,minmax(28px,1fr));gap:4px;}
+            .nav-btn-bkn{height:28px;font-size:11px;border-radius:4px;border-width:1px;}
+            .header-bkn{flex-wrap:wrap;padding:12px 16px;gap:12px;}
+            .header-title-area{width:100%;}
+            .progress-bar-container{margin:0;width:100%;align-items:flex-start;order:3;margin-top:4px;}
+            .header-actions{width:100%;justify-content:space-between;order:2;}
+            .action-buttons{flex-direction:row;gap:8px;padding-top:24px;}
+            .btn-simpan,.btn-lewatkan{width:50%;justify-content:center;padding:10px 8px;font-size:.9rem;}
+            .legend-container{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:4px;padding-top:4px;border-top:1px solid #e2e8f0;}
+            .legend-item{margin-bottom:0!important;}
+            .legend-item span{font-size:10px;}
+            .legend-item div{width:12px;height:12px;}
+        }
+        @media (max-width:480px){
+            .timer-bkn-container{padding:3px 8px;gap:6px;}
+            .timer-bkn-text{font-size:.95rem;}
+            .btn-selesai-header{font-size:.75rem;padding:5px 10px;}
+            .question-box{padding:16px;font-size:1rem;}
+            .option-item{padding:10px 12px;}
+            .option-letter{width:26px;height:26px;font-size:.9rem;margin-right:12px;}
+            .option-text{font-size:.9rem;}
+            .sidebar-nav{max-height:115px;padding:4px 8px;}
+            .nav-grid-bkn{grid-template-columns:repeat(auto-fill,minmax(24px,1fr));gap:3px;}
+            .nav-btn-bkn{height:24px;font-size:10px;border-radius:4px;border-width:1px;}
+        }
+    </style>
+</head>
+<body class="bg-[#f8fafc]">
+
+    <!-- HALAMAN INFO -->
+    <div id="info-page" class="min-h-screen flex flex-col bg-gray-100">
+        <header class="bg-[#1e3a8a] text-white py-3 px-6 flex flex-col md:flex-row justify-between items-center shadow-md">
+            <div class="flex items-center gap-3 mb-2 md:mb-0">
+                <svg viewBox="0 0 100 100" class="w-10 h-10">
+                    <circle cx="50" cy="50" r="46" fill="#facc15" />
+                    <path d="M50 20 L30 35 L50 50 L70 35 Z" fill="#1e3a8a"/>
+                    <path d="M30 45 L50 60 L70 45 L70 50 L50 65 L30 50 Z" fill="#1e3a8a"/>
+                </svg>
+                <div>
+                    <div class="flex items-baseline leading-none mb-1"><span class="text-white font-black text-lg tracking-tight">tescpns</span><span class="text-orange-400 font-black text-lg tracking-tight">.online</span></div>
+                    <h1 class="text-md font-bold tracking-wider uppercase">Simulasi CAT CPNS Bagian 13</h1>
+                    <p class="text-xs text-blue-200">Format SKD 110 Soal tescpns.online</p>
+                </div>
+            </div>
+        </header>
+        <div class="bg-red-700 text-white text-center text-sm md:text-base font-bold px-4 py-3 leading-snug shrink-0">
+            ⚠️ Dilarang memfoto, merekam, menyalin, dan/atau menyebarluaskan soal maupun pembahasan ujian ini dalam bentuk apa pun kepada pihak lain. Pelanggaran atas ketentuan ini dapat dikenakan sanksi sesuai Undang-Undang Nomor 28 Tahun 2014 tentang Hak Cipta dan Undang-Undang Informasi dan Transaksi Elektronik (ITE) yang berlaku.
+            <div class="text-[11px] md:text-xs font-semibold text-red-100 mt-1">© 2026 tescpns.online — Hak Cipta Dilindungi Undang-Undang. Seluruh soal dan pembahasan adalah milik tescpns.online.</div>
+        </div>
+
+
+        <main class="flex-grow p-4 md:p-8 max-w-6xl mx-auto w-full">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 flex flex-col bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
+                    <div class="bg-blue-600 text-white font-bold py-4 px-5 flex items-center gap-2">📋 Detail Simulasi SKD CPNS</div>
+                    <div class="p-6 flex-grow flex flex-col justify-between">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div>
+                                <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider border-b pb-2 mb-4">Informasi Ujian</h3>
+                                <div class="space-y-4">
+                                    <div class="flex items-center justify-between text-sm"><span class="text-gray-500">⏳ Durasi</span><span class="font-bold text-gray-800">100 menit</span></div>
+                                    <div class="flex items-center justify-between text-sm"><span class="text-gray-500">📋 Total Soal</span><span class="font-bold text-gray-800">110 soal</span></div>
+                                    <div class="flex items-center justify-between text-sm"><span class="text-gray-500">🏆 Passing Grade</span><span class="font-bold text-gray-800">311</span></div>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider border-b pb-2 mb-4">Komposisi Soal</h3>
+                                <div class="space-y-3">
+                                    <div class="flex items-center justify-between text-xs md:text-sm"><span class="text-gray-700 font-medium">TWK (Ambang 65)</span><span class="bg-violet-100 text-violet-700 font-bold px-2.5 py-1 rounded">30 Soal</span></div>
+                                    <div class="flex items-center justify-between text-xs md:text-sm"><span class="text-gray-700 font-medium">TIU (Ambang 80)</span><span class="bg-sky-100 text-sky-700 font-bold px-2.5 py-1 rounded">35 Soal</span></div>
+                                    <div class="flex items-center justify-between text-xs md:text-sm"><span class="text-gray-700 font-medium">TKP (Ambang 166)</span><span class="bg-amber-100 text-amber-700 font-bold px-2.5 py-1 rounded">45 Soal</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-4">
+                    <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+                        <div class="bg-yellow-500 text-white font-bold py-3.5 px-5 flex items-center gap-2">⚠️ Perhatian Penting</div>
+                        <div class="p-5 text-sm space-y-3.5 text-gray-700">
+                            <div class="flex gap-2 items-start"><span class="text-green-600 font-bold">✓</span><p>Siapkan kertas coretan untuk soal TIU.</p></div>
+                            <div class="flex gap-2 items-start"><span class="text-sky-600 font-bold">📶</span><p>Pastikan Anda memiliki koneksi internet yang stabil dan lancar selama ujian berlangsung, karena koneksi yang terputus dapat menyebabkan jawaban gagal tersimpan.</p></div>
+                            <div class="flex gap-2 items-start"><span class="text-yellow-600 font-bold">⏳</span><p>Waktu 100 menit berjalan tanpa jeda. Jika habis, ujian otomatis terkirim.</p></div>
+                            <div class="flex gap-2 items-start border-t pt-4 mt-4"><span class="text-blue-600 font-bold">ℹ️</span><p class="font-bold text-gray-800 text-sm">Petunjuk Navigasi Warna:</p></div>
+                            <div class="space-y-2 pl-6 mt-2">
+                                <div class="flex items-center gap-2"><div class="w-4 h-4 rounded bg-[#10b981]"></div><span class="text-xs">Hijau: Sudah Dijawab</span></div>
+                                <div class="flex items-center gap-2"><div class="w-4 h-4 rounded bg-[#facc15]"></div><span class="text-xs">Kuning: Posisi Soal Aktif</span></div>
+                                <div class="flex items-center gap-2"><div class="w-4 h-4 rounded bg-[#ef4444]"></div><span class="text-xs">Merah: Belum Dijawab</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md border border-gray-200 p-5 flex flex-col gap-3">
+                        <table class="w-full text-sm mb-1">
+                            <tbody>
+                                <tr>
+                                    <td class="py-2 pr-3 font-semibold text-gray-700 whitespace-nowrap align-middle">Nama Peserta</td>
+                                    <td class="py-2 w-full">
+                                        <input type="text" id="input-nama-peserta" placeholder="Contoh: Ali Saefudin" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <p class="text-[11px] text-gray-400 mt-1">Silakan masukkan nama lengkap Anda sebelum memulai ujian.</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <button id="btn-mulai-ujian-sekarang" class="w-full bg-[#10b981] hover:bg-[#059669] text-white font-bold py-4 px-4 rounded-xl shadow-md transition duration-250 flex items-center justify-center gap-2 text-lg">▶ MULAI UJIAN</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- HALAMAN UJIAN -->
+    <div id="exam-container" class="hidden">
+        <header class="header-bkn">
+            <div class="header-title-area">
+                <h1 class="font-bold tracking-wide">CAT SKD CPNS 2026</h1>
+                <p class="text-blue-200 text-sm">Peserta: <span class="user-name-placeholder font-semibold text-white">Peserta</span></p>
+            </div>
+            <div class="progress-bar-container hidden md:flex">
+                <div class="progress-text text-sm font-bold mb-1"><span id="dijawab-count-header" class="text-yellow-300">0</span> / <span id="total-soal-header">110</span> Dijawab</div>
+                <div class="progress-bar-bg"><div id="progress-fill" class="progress-bar-fill"></div></div>
+            </div>
+            <div class="header-actions flex gap-4 items-center">
+                <div class="timer-bkn-container">
+                    <div class="timer-icon-wrapper">
+                        <svg class="animate-hourglass" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M5 22h14"></path><path d="M5 2h14"></path><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"></path><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"></path>
+                        </svg>
+                    </div>
+                    <div class="timer-text-group flex flex-col">
+                        <span class="text-[9px] font-bold text-red-500 leading-none">SISA WAKTU</span>
+                        <span id="timer-bkn-text" class="timer-bkn-text">100:00</span>
+                    </div>
+                </div>
+                <button id="finish-btn-header" class="btn-selesai-header">Selesai Ujian</button>
+            </div>
+        </header>
+
+        <div class="main-content-wrapper">
+            <aside class="sidebar-nav">
+                <div class="nav-grid-wrapper flex flex-col">
+                    <div id="nav-grid-bkn" class="nav-grid-bkn flex-grow overflow-y-auto"></div>
+                    <div class="legend-container mt-4 pt-3 border-t border-slate-200 shrink-0">
+                        <div class="flex items-center gap-2.5 mb-2 legend-item"><div class="w-5 h-5 rounded-full bg-[#10b981]"></div><span class="text-sm font-medium text-slate-700">Sudah Dijawab</span></div>
+                        <div class="flex items-center gap-2.5 mb-2 legend-item"><div class="w-5 h-5 rounded-full bg-[#facc15]"></div><span class="text-sm font-medium text-slate-700">Soal Aktif</span></div>
+                        <div class="flex items-center gap-2.5 legend-item"><div class="w-5 h-5 rounded-full bg-[#ef4444]"></div><span class="text-sm font-medium text-slate-700">Belum Dijawab</span></div>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="question-area">
+                <div class="mb-4">
+                    <h2 id="soal-number-title" class="text-xl md:text-2xl font-extrabold text-gray-800 mb-2">Soal 1 dari 110</h2>
+                    <span id="soal-category-badge" class="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-bold inline-block">Memuat Kategori...</span>
+                </div>
+                <div class="question-box"><div id="question-text" class="m-0">Memuat soal...</div></div>
+                <div id="options-container" class="options-list"></div>
+                <div class="action-buttons">
+                    <button id="btn-simpan" class="btn-simpan bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl flex items-center gap-2 transition shadow-md">Simpan dan Lanjutkan</button>
+                    <button id="btn-lewatkan" class="btn-lewatkan bg-white text-red-600 border border-red-200 hover:bg-red-50 font-bold py-3 px-6 rounded-xl transition">Lewati Soal Ini</button>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- HALAMAN HASIL -->
+    <div id="result-page" class="hidden min-h-screen bg-slate-50 flex flex-col">
+        <header class="bg-[#0f172a] text-white py-4 px-6 flex justify-between items-center shadow-lg shrink-0">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl md:text-3xl">📊</span>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-black tracking-wide text-white">Rapor & Analisis Prediksi Kelulusan</h1>
+                    <p class="text-xs text-slate-400">Peserta: <span class="user-name-placeholder text-white font-semibold">Peserta</span></p>
+                </div>
+            </div>
+            <div class="flex gap-2"><button onclick="window.location.reload();" class="bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold px-5 py-2.5 rounded-lg transition shadow-md">Ulangi Simulasi</button></div>
+        </header>
+
+        <main class="flex-grow p-4 md:p-8 max-w-6xl mx-auto w-full space-y-8 overflow-y-auto">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-slate-100 pb-6 md:pb-0 md:pr-6 relative">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Skor Kumulatif</p>
+                    <span id="app-total-score" class="text-6xl font-black text-[#1e3a8a] my-2">0</span>
+                    <span class="text-xs text-slate-400 mb-2">Target Aman: 311 - 550</span>
+                    <span id="app-overall-badge" class="px-4 py-1.5 rounded-full text-xs font-extrabold tracking-wide uppercase text-center w-full">TIDAK MEMENUHI</span>
+                </div>
+                <div class="flex flex-col p-4 bg-violet-50 rounded-xl border border-violet-100 justify-center">
+                    <div class="flex justify-between items-end mb-1">
+                        <div><span class="text-[10px] font-bold text-violet-500 uppercase">Wawasan Kebangsaan</span><div class="text-3xl font-black text-violet-900" id="app-score-twk">0</div></div>
+                        <span id="app-status-twk" class="font-extrabold mb-1">GAGAL</span>
+                    </div>
+                    <div class="result-progress-container bg-violet-200"><div id="bar-twk" class="progress-bar-fill bg-violet-600" style="width:0%"></div><div class="result-passing-line" style="left:43.33%"></div></div>
+                    <div class="flex justify-between text-[10px] text-violet-500 mt-1 font-semibold"><span>Min: 65</span><span>Maks: 150</span></div>
+                </div>
+                <div class="flex flex-col p-4 bg-sky-50 rounded-xl border border-sky-100 justify-center">
+                    <div class="flex justify-between items-end mb-1">
+                        <div><span class="text-[10px] font-bold text-sky-500 uppercase">Intelegensia Umum</span><div class="text-3xl font-black text-sky-900" id="app-score-tiu">0</div></div>
+                        <span id="app-status-tiu" class="font-extrabold mb-1">GAGAL</span>
+                    </div>
+                    <div class="result-progress-container bg-sky-200"><div id="bar-tiu" class="progress-bar-fill bg-sky-600" style="width:0%"></div><div class="result-passing-line" style="left:45.71%"></div></div>
+                    <div class="flex justify-between text-[10px] text-sky-500 mt-1 font-semibold"><span>Min: 80</span><span>Maks: 175</span></div>
+                </div>
+                <div class="flex flex-col p-4 bg-amber-50 rounded-xl border border-amber-100 justify-center">
+                    <div class="flex justify-between items-end mb-1">
+                        <div><span class="text-[10px] font-bold text-amber-600 uppercase">Karakteristik Pribadi</span><div class="text-3xl font-black text-amber-900" id="app-score-tkp">0</div></div>
+                        <span id="app-status-tkp" class="font-extrabold mb-1">GAGAL</span>
+                    </div>
+                    <div class="result-progress-container bg-amber-200"><div id="bar-tkp" class="progress-bar-fill bg-amber-500" style="width:0%"></div><div class="result-passing-line" style="left:73.78%"></div></div>
+                    <div class="flex justify-between text-[10px] text-amber-600 mt-1 font-semibold"><span>Min: 166</span><span>Maks: 225</span></div>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+                    <div><h3 class="text-lg font-bold text-slate-800">Bedah Soal & Kunci Jawaban</h3><p class="text-xs text-slate-500">Gunakan filter untuk meninjau kelemahan Anda</p></div>
+                    <div class="flex flex-wrap gap-2" id="explanation-filters">
+                        <button data-filter="all" class="filter-btn active px-4 py-1.5 rounded-lg text-xs font-bold transition bg-[#1e3a8a] text-white">Semua</button>
+                        <button data-filter="correct" class="filter-btn px-4 py-1.5 rounded-lg text-xs font-bold transition bg-white text-slate-600 border border-slate-200 hover:bg-slate-50">Benar</button>
+                        <button data-filter="incorrect" class="filter-btn px-4 py-1.5 rounded-lg text-xs font-bold transition bg-white text-slate-600 border border-slate-200 hover:bg-slate-50">Salah</button>
+                        <button data-filter="twk" class="filter-btn px-4 py-1.5 rounded-lg text-xs font-bold transition bg-white text-slate-600 border border-slate-200 hover:bg-slate-50">TWK</button>
+                        <button data-filter="tiu" class="filter-btn px-4 py-1.5 rounded-lg text-xs font-bold transition bg-white text-slate-600 border border-slate-200 hover:bg-slate-50">TIU</button>
+                        <button data-filter="tkp" class="filter-btn px-4 py-1.5 rounded-lg text-xs font-bold transition bg-white text-slate-600 border border-slate-200 hover:bg-slate-50">TKP</button>
+                    </div>
+                </div>
+                <div id="explanation-feed-list" class="space-y-6"></div>
+            </div>
+        </main>
+    </div>
+
+    <div id="custom-alert" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden z-[100] backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full text-left border border-slate-100 transform transition-all">
+            <div class="flex justify-between items-center border-b pb-3 mb-4"><h3 class="text-lg font-black text-slate-800">INFORMASI SISTEM</h3><button id="close-alert-btn" class="text-slate-400 hover:text-red-500 text-2xl font-bold leading-none">&times;</button></div>
+            <p id="unanswered-count" class="text-red-600 font-bold mb-2"></p>
+            <p id="custom-alert-message" class="text-slate-600 mb-6 text-sm leading-relaxed"></p>
+            <div id="custom-alert-buttons" class="flex justify-end gap-3"></div>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    // ===================== SVG HELPER (untuk soal TIU Figural) =====================
+    function poly(sides, fill, rotate, size) {
+        rotate = rotate === undefined ? -90 : rotate;
+        size = size || 33;
+        const cx = 50, cy = 50; let pts = [];
+        for (let i = 0; i < sides; i++) {
+            const angle = rotate + i * (360 / sides);
+            const rad = angle * Math.PI / 180;
+            pts.push((cx + size * Math.cos(rad)).toFixed(1) + "," + (cy + size * Math.sin(rad)).toFixed(1));
+        }
+        return '<svg viewBox="0 0 100 100" width="62" height="62"><polygon points="' + pts.join(' ') + '" fill="' + fill + '" stroke="#1e293b" stroke-width="2.5"/></svg>';
+    }
+    function arrowSvg(deg, fill) {
+        fill = fill || '#1e3a8a';
+        return '<svg viewBox="0 0 100 100" width="62" height="62"><g transform="rotate(' + deg + ' 50 50)"><polygon points="50,12 78,55 62,55 62,88 38,88 38,55 22,55" fill="' + fill + '"/></g></svg>';
+    }
+    function dotsSvg(count) {
+        const positions = [[20,20],[50,20],[80,20],[20,50],[50,50],[80,50],[20,80],[50,80],[80,80]];
+        let out = '';
+        for (let i = 0; i < count && i < 9; i++) { out += '<circle cx="' + positions[i][0] + '" cy="' + positions[i][1] + '" r="8" fill="#1e3a8a"/>'; }
+        return '<svg viewBox="0 0 100 100" width="62" height="62">' + out + '</svg>';
+    }
+    function pieSvg(fraction, fill) {
+        fill = fill || '#3b82f6';
+        if (fraction <= 0) return '<svg viewBox="0 0 100 100" width="62" height="62"><circle cx="50" cy="50" r="40" fill="white" stroke="#1e293b" stroke-width="2.5"/></svg>';
+        if (fraction >= 1) return '<svg viewBox="0 0 100 100" width="62" height="62"><circle cx="50" cy="50" r="40" fill="' + fill + '" stroke="#1e293b" stroke-width="2.5"/></svg>';
+        const cx = 50, cy = 50, r = 40;
+        const angle = fraction * 360;
+        const rad = (angle - 90) * Math.PI / 180;
+        const x = (cx + r * Math.cos(rad)).toFixed(1);
+        const y = (cy + r * Math.sin(rad)).toFixed(1);
+        const largeArc = angle > 180 ? 1 : 0;
+        return '<svg viewBox="0 0 100 100" width="62" height="62"><circle cx="50" cy="50" r="40" fill="white" stroke="#1e293b" stroke-width="2.5"/><path d="M50,50 L50,10 A40,40 0 ' + largeArc + ' 1 ' + x + ',' + y + ' Z" fill="' + fill + '"/></svg>';
+    }
+    function squareSize(size, fill) {
+        fill = fill || 'none';
+        const half = size / 2;
+        return '<svg viewBox="0 0 100 100" width="62" height="62"><rect x="' + (50-half) + '" y="' + (50-half) + '" width="' + size + '" height="' + size + '" fill="' + fill + '" stroke="#1e293b" stroke-width="2.5"/></svg>';
+    }
+    function circleSize(r, fill) {
+        fill = fill || 'none';
+        return '<svg viewBox="0 0 100 100" width="62" height="62"><circle cx="50" cy="50" r="' + r + '" fill="' + fill + '" stroke="#1e293b" stroke-width="2.5"/></svg>';
+    }
+    function overlapCircles(n) {
+        const positions = [[35,50],[65,50],[50,30],[50,70],[50,50]];
+        let out = '';
+        for (let i = 0; i < n && i < 5; i++) { out += '<circle cx="' + positions[i][0] + '" cy="' + positions[i][1] + '" r="22" fill="none" stroke="#1e3a8a" stroke-width="2.5" opacity="0.85"/>'; }
+        return '<svg viewBox="0 0 100 100" width="62" height="62">' + out + '</svg>';
+    }
+    function flagShape(mirror, fill) {
+        fill = fill || '#1e3a8a';
+        const triPoints = mirror ? "65,20 30,35 65,50" : "35,20 70,35 35,50";
+        return '<svg viewBox="0 0 100 100" width="62" height="62"><rect x="32" y="15" width="6" height="70" fill="' + fill + '"/><polygon points="' + triPoints + '" fill="' + fill + '"/></svg>';
+    }
+    function flagRotated(deg, fill) {
+        fill = fill || '#1e3a8a';
+        return '<svg viewBox="0 0 100 100" width="62" height="62"><g transform="rotate(' + deg + ' 50 50)"><rect x="32" y="15" width="6" height="70" fill="' + fill + '"/><polygon points="35,20 70,35 35,50" fill="' + fill + '"/></g></svg>';
+    }
+    function triCircle() {
+        return '<svg viewBox="0 0 100 100" width="62" height="62"><polygon points="50,15 85,80 15,80" fill="none" stroke="#1e293b" stroke-width="3"/><circle cx="50" cy="60" r="18" fill="none" stroke="#dc2626" stroke-width="3"/></svg>';
+    }
+    function sqCircle() {
+        return '<svg viewBox="0 0 100 100" width="62" height="62"><rect x="15" y="15" width="70" height="70" fill="none" stroke="#1e293b" stroke-width="3"/><circle cx="50" cy="50" r="33" fill="none" stroke="#dc2626" stroke-width="3"/></svg>';
+    }
+    function circleOnly() { return '<svg viewBox="0 0 100 100" width="62" height="62"><circle cx="50" cy="50" r="30" fill="none" stroke="#dc2626" stroke-width="3"/></svg>'; }
+    function triOnly() { return '<svg viewBox="0 0 100 100" width="62" height="62"><polygon points="50,18 82,78 18,78" fill="none" stroke="#1e293b" stroke-width="3"/></svg>'; }
+    function squareOnly() { return '<svg viewBox="0 0 100 100" width="62" height="62"><rect x="18" y="18" width="64" height="64" fill="none" stroke="#1e293b" stroke-width="3"/></svg>'; }
+    function row(items) { return '<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:10px 0;">' + items.join('') + '</div>'; }
+    function qMark() { return '<span style="font-size:30px;font-weight:800;color:#dc2626;display:inline-flex;align-items:center;padding:0 4px;">?</span>'; }
+    function figIntro(txt) { return '<div class="fig-badge">🖼️ SOAL FIGURAL BERGAMBAR</div><div style="margin-bottom:6px;">' + txt + '</div>'; }
+
+    // Helper SVG BARU khusus batch soal figural kali ini (pola 100% berbeda dari batch sebelumnya)
+    function starPoly(points, fill) {
+        fill = fill || '#7c3aed';
+        const cx = 50, cy = 50, outerR = 38, innerR = 16;
+        let pts = [];
+        for (let i = 0; i < points * 2; i++) {
+            const r = i % 2 === 0 ? outerR : innerR;
+            const angle = -90 + i * (360 / (points * 2));
+            const rad = angle * Math.PI / 180;
+            pts.push((cx + r * Math.cos(rad)).toFixed(1) + "," + (cy + r * Math.sin(rad)).toFixed(1));
+        }
+        return '<svg viewBox="0 0 100 100" width="62" height="62"><polygon points="' + pts.join(' ') + '" fill="' + fill + '" stroke="#1e293b" stroke-width="2"/></svg>';
+    }
+    function nestedSquares(n, strokeColor) {
+        strokeColor = strokeColor || '#1e293b';
+        let rects = '';
+        const maxSize = 74, step = 14;
+        for (let i = 0; i < n && i < 5; i++) {
+            const size = maxSize - i * step;
+            const pos = 50 - size / 2;
+            rects += '<rect x="' + pos.toFixed(1) + '" y="' + pos.toFixed(1) + '" width="' + size + '" height="' + size + '" fill="none" stroke="' + strokeColor + '" stroke-width="2.5"/>';
+        }
+        return '<svg viewBox="0 0 100 100" width="62" height="62">' + rects + '</svg>';
+    }
+    function gridShade(n, fill) {
+        fill = fill || '#0ea5e9';
+        const cells = [[10,10],[52,10],[10,52],[52,52]];
+        let out = '<rect x="8" y="8" width="84" height="84" fill="none" stroke="#1e293b" stroke-width="2"/><line x1="50" y1="8" x2="50" y2="92" stroke="#1e293b" stroke-width="2"/><line x1="8" y1="50" x2="92" y2="50" stroke="#1e293b" stroke-width="2"/>';
+        for (let i = 0; i < n && i < 4; i++) { out += '<rect x="' + cells[i][0] + '" y="' + cells[i][1] + '" width="38" height="38" fill="' + fill + '"/>'; }
+        return '<svg viewBox="0 0 100 100" width="62" height="62">' + out + '</svg>';
+    }
+    function linesSvg(n, color) {
+        color = color || '#1e3a8a';
+        let out = '';
+        const ys = [25,40,55,70,85];
+        for (let i = 0; i < n && i < 5; i++) { out += '<line x1="12" y1="' + ys[i] + '" x2="88" y2="' + ys[i] + '" stroke="' + color + '" stroke-width="5" stroke-linecap="round"/>'; }
+        return '<svg viewBox="0 0 100 100" width="62" height="62">' + out + '</svg>';
+    }
+    function diagShape(mirror, fill) {
+        fill = fill || '#1e3a8a';
+        const pathNormal = 'M20,20 L20,50 L35,50 L35,35 L60,35 L60,20 Z';
+        const pathMirror = 'M20,20 L50,20 L50,35 L35,35 L35,60 L20,60 Z';
+        return '<svg viewBox="0 0 100 100" width="62" height="62"><path d="' + (mirror ? pathMirror : pathNormal) + '" fill="' + fill + '" stroke="#1e293b" stroke-width="1.5"/><line x1="10" y1="90" x2="90" y2="10" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="3,3"/></svg>';
+    }
+    function squareFull(fill) { fill = fill || 'none'; return '<svg viewBox="0 0 100 100" width="62" height="62"><polygon points="20,20 80,20 80,80 20,80" fill="' + fill + '" stroke="#1e293b" stroke-width="2.5"/></svg>'; }
+    function squareCut(fill) { fill = fill || 'none'; return '<svg viewBox="0 0 100 100" width="62" height="62"><polygon points="20,20 65,20 80,35 80,80 20,80" fill="' + fill + '" stroke="#1e293b" stroke-width="2.5"/></svg>'; }
+    function pentFull(fill) { fill = fill || 'none'; return poly(5, fill, -90, 35); }
+    function pentCut(fill) { fill = fill || 'none'; return '<svg viewBox="0 0 100 100" width="62" height="62"><polygon points="50,15 78,35 68,44 66,80 34,80 22,35" fill="' + fill + '" stroke="#1e293b" stroke-width="2.5"/></svg>'; }
+    function polyWithDots(dotCount, fill) {
+        fill = fill || 'none';
+        const outer = '<polygon points="50,15 85,75 15,75" fill="' + fill + '" stroke="#1e293b" stroke-width="2.5"/>';
+        const positions = [[50,55],[40,62],[60,62],[50,68],[35,68]];
+        let dots = '';
+        for (let i = 0; i < dotCount && i < 5; i++) { dots += '<circle cx="' + positions[i][0] + '" cy="' + positions[i][1] + '" r="4.5" fill="#dc2626"/>'; }
+        return '<svg viewBox="0 0 100 100" width="62" height="62">' + outer + dots + '</svg>';
+    }
+    function chevronSvg(n, color) {
+        color = color || '#1e3a8a';
+        const ys = [20,40,60,80];
+        let out = '';
+        for (let i = 0; i < n && i < 4; i++) { const y = ys[i]; out += '<polyline points="25,' + y + ' 50,' + (y+12) + ' 75,' + y + '" fill="none" stroke="' + color + '" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>'; }
+        return '<svg viewBox="0 0 100 100" width="62" height="62">' + out + '</svg>';
+    }
+    function nestedTriAlt(n) {
+        const sizes = [40,28,18,10];
+        let out = '';
+        for (let i = 0; i < n && i < 4; i++) {
+            const s = sizes[i];
+            const fillColor = i % 2 === 0 ? '#1e293b' : 'white';
+            const topY = 50 - s, leftX = 50 - s, rightX = 50 + s, botY = 50 + s * 0.6;
+            out += '<polygon points="50,' + topY + ' ' + rightX + ',' + botY + ' ' + leftX + ',' + botY + '" fill="' + fillColor + '" stroke="#1e293b" stroke-width="2"/>';
+        }
+        return '<svg viewBox="0 0 100 100" width="62" height="62">' + out + '</svg>';
+    }
+    function labeledRow(items, labels) {
+        let out = '<div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;margin:10px 0;">';
+        for (let i = 0; i < items.length; i++) {
+            out += '<div style="display:flex;flex-direction:column;align-items:center;gap:4px;">' + items[i] + '<span style="font-weight:800;font-size:13px;color:#1e293b;">' + labels[i] + '</span></div>';
+        }
+        out += '</div>';
+        return out;
+    }
+    function gridDiag(variant) {
+        const base = '<rect x="8" y="8" width="84" height="84" fill="none" stroke="#1e293b" stroke-width="2"/><line x1="50" y1="8" x2="50" y2="92" stroke="#1e293b" stroke-width="2"/><line x1="8" y1="50" x2="92" y2="50" stroke="#1e293b" stroke-width="2"/>';
+        const tl = '<rect x="10" y="10" width="38" height="38" fill="#0ea5e9"/>';
+        const tr = '<rect x="52" y="10" width="38" height="38" fill="#0ea5e9"/>';
+        const bl = '<rect x="10" y="52" width="38" height="38" fill="#0ea5e9"/>';
+        const br = '<rect x="52" y="52" width="38" height="38" fill="#0ea5e9"/>';
+        const cells = variant === 1 ? (tl + br) : (tr + bl);
+        return '<svg viewBox="0 0 100 100" width="62" height="62">' + base + cells + '</svg>';
+    }
+    function gridAdjacent() {
+        const base = '<rect x="8" y="8" width="84" height="84" fill="none" stroke="#1e293b" stroke-width="2"/><line x1="50" y1="8" x2="50" y2="92" stroke="#1e293b" stroke-width="2"/><line x1="8" y1="50" x2="92" y2="50" stroke="#1e293b" stroke-width="2"/>';
+        const tl = '<rect x="10" y="10" width="38" height="38" fill="#0ea5e9"/>';
+        const tr = '<rect x="52" y="10" width="38" height="38" fill="#0ea5e9"/>';
+        return '<svg viewBox="0 0 100 100" width="62" height="62">' + base + tl + tr + '</svg>';
+    }
+
+
+    // ===================== BANK SOAL MASTER HOTS+ (110 SOAL: 30 TWK / 35 TIU / 45 TKP) — BAGIAN KE-13 =====================
+    const masterHotsData = [
+        {
+            category:'TWK',
+            question:'Dalam sidang tahunan MPR, terungkap usulan untuk mengembalikan GBHN (Garis-Garis Besar Haluan Negara) sebagai haluan pembangunan nasional yang mengikat presiden terpilih dari partai manapun. Wacana ini pada dasarnya berupaya menghadirkan kembali fungsi MPR yang hilang pasca-amandemen UUD 1945, yaitu...',
+            options:['Memilih presiden dan wakil presiden','Menetapkan haluan negara yang bersifat mengikat sebagaimana era sebelum reformasi','Membubarkan partai politik','Mengangkat menteri kabinet','Mengadili presiden dalam sidang istimewa'],
+            answer:'Menetapkan haluan negara yang bersifat mengikat sebagaimana era sebelum reformasi',
+            pembahasan:'Sebelum amandemen, MPR berwenang menetapkan GBHN sebagai haluan negara yang mengikat presiden. Pasca-amandemen, kewenangan itu dihapus karena presiden dipilih langsung oleh rakyat dan bertanggung jawab menyusun visi-misinya sendiri, bukan lagi mandataris MPR.'
+        },
+        {
+            category:'TWK',
+            question:'Sebuah RUU disetujui bersama oleh DPR dan Presiden, namun Presiden tidak kunjung menandatanganinya hingga melewati 30 hari sejak persetujuan bersama. Berdasarkan UUD 1945, status RUU tersebut adalah...',
+            options:['Batal demi hukum dan harus dibahas ulang dari awal','Tetap sah menjadi undang-undang dan wajib diundangkan','Dikembalikan kepada DPR untuk direvisi','Menjadi kewenangan MK untuk memutuskan keabsahannya','Berlaku sebagai Perppu'],
+            answer:'Tetap sah menjadi undang-undang dan wajib diundangkan',
+            pembahasan:'Pasal 20 ayat (5) UUD 1945 menegaskan bahwa RUU yang telah disetujui bersama namun tidak ditandatangani Presiden dalam 30 hari tetap sah menjadi undang-undang dan wajib diundangkan, sebagai mekanisme mencegah kebuntuan (deadlock) legislasi.'
+        },
+        {
+            category:'TWK',
+            question:'Seorang gubernur mengeluarkan kebijakan daerah yang secara substansial bertentangan dengan kebijakan pemerintah pusat terkait pengelolaan sumber daya alam strategis. Mekanisme konstitusional yang tepat untuk menyelesaikan pertentangan tersebut adalah...',
+            options:['Pemerintah pusat dapat membatalkan langsung tanpa proses hukum','Peninjauan dan pembatalan melalui mekanisme executive review atau uji materi ke MA sesuai jenis produk hukumnya','Presiden membubarkan pemerintahan daerah tersebut','DPR memakzulkan gubernur','Konflik diserahkan sepenuhnya kepada TNI'],
+            answer:'Peninjauan dan pembatalan melalui mekanisme executive review atau uji materi ke MA sesuai jenis produk hukumnya',
+            pembahasan:'Produk hukum daerah yang bertentangan dengan peraturan di atasnya dapat dibatalkan melalui executive review oleh pemerintah pusat (untuk Perkada) atau uji materi ke Mahkamah Agung (untuk Perda), sesuai prinsip negara kesatuan yang tetap menjunjung supremasi hukum dan hierarki peraturan perundang-undangan.'
+        },
+        {
+            category:'TWK',
+            question:'Ketika sebuah ormas terbukti secara sah melalui putusan pengadilan menyebarkan paham yang bertentangan dengan Pancasila, tindakan pembubaran ormas tersebut oleh pemerintah tetap harus melalui...',
+            options:['Keputusan presiden secara langsung tanpa proses hukum','Proses hukum di pengadilan sesuai asas due process of law meski dasarnya adalah UU Ormas','Referendum nasional','Voting DPR tanpa pengadilan','Perintah langsung Kejaksaan Agung tanpa pengadilan'],
+            answer:'Proses hukum di pengadilan sesuai asas due process of law meski dasarnya adalah UU Ormas',
+            pembahasan:'Meskipun negara berwenang membatasi ormas yang bertentangan dengan ideologi negara, pembubaran tetap harus menghormati prinsip negara hukum (due process of law) melalui mekanisme peradilan agar tidak terjadi kesewenang-wenangan kekuasaan.'
+        },
+        {
+            category:'TWK',
+            question:'Indonesia turut mengirimkan pasukan Garuda dalam misi pemeliharaan perdagangan di bawah bendera PBB meski tidak memiliki kepentingan ekonomi maupun politik langsung di wilayah konflik tersebut. Keikutsertaan ini paling tepat mencerminkan amanat konstitusi dalam...',
+            options:['Pembukaan UUD 1945 alinea keempat tentang ikut melaksanakan ketertiban dunia','Pasal 33 UUD 1945 tentang perekonomian nasional','Pasal 31 UUD 1945 tentang pendidikan','Pasal 29 UUD 1945 tentang agama','Pasal 27 UUD 1945 tentang kesamaan kedudukan warga negara'],
+            answer:'Pembukaan UUD 1945 alinea keempat tentang ikut melaksanakan ketertiban dunia',
+            pembahasan:'Pembukaan UUD 1945 alinea keempat mengamanatkan Indonesia untuk \'ikut melaksanakan ketertiban dunia yang berdasarkan kemerdekaan, perdamaian abadi, dan keadilan sosial\', menjadi dasar konstitusional pengiriman pasukan perdamaian meski tanpa kepentingan langsung.'
+        },
+        {
+            category:'TWK',
+            question:'Dalam konsep Wawasan Nusantara, laut tidak dipandang sebagai pemisah antarpulau, melainkan sebagai penghubung. Cara pandang ini secara langsung melandasi konsep hukum laut Indonesia yang dikenal sebagai...',
+            options:['Landas kontinen semata','Zona Ekonomi Eksklusif semata','Negara Kepulauan (Archipelagic State) dengan prinsip laut sebagai pemersatu wilayah','Batas teritorial 3 mil warisan kolonial','Perairan internasional bebas'],
+            answer:'Negara Kepulauan (Archipelagic State) dengan prinsip laut sebagai pemersatu wilayah',
+            pembahasan:'Deklarasi Djuanda 1957 yang diakui dalam UNCLOS 1982 menegaskan konsep negara kepulauan, di mana perairan di antara pulau-pulau menjadi satu kesatuan wilayah kedaulatan, sejalan dengan cara pandang Wawasan Nusantara bahwa laut menyatukan, bukan memisahkan.'
+        },
+        {
+            category:'TWK',
+            question:'Seorang ASN diminta atasannya untuk memenangkan salah satu calon kepala daerah tertentu dengan memobilisasi bawahannya pada saat jam kerja. Sikap yang seharusnya diambil ASN tersebut, ditinjau dari asas netralitas ASN, adalah...',
+            options:['Menuruti perintah karena atasan memiliki wewenang struktural','Menolak secara tegas namun sopan, dan melaporkan melalui jalur pengawasan internal maupun KASN jika diperlukan','Diam-diam membantu di luar jam kerja saja','Melapor ke media massa terlebih dahulu tanpa jalur internal','Ikut serta tetapi tidak mengajak bawahan'],
+            answer:'Menolak secara tegas namun sopan, dan melaporkan melalui jalur pengawasan internal maupun KASN jika diperlukan',
+            pembahasan:'UU ASN mewajibkan netralitas dalam politik praktis. Instruksi atasan yang melanggar asas ini wajib ditolak, dan penyalahgunaan wewenang tersebut dapat dilaporkan melalui mekanisme pengawasan internal atau Komisi Aparatur Sipil Negara (KASN).'
+        },
+        {
+            category:'TWK',
+            question:'Perubahan (amandemen) UUD 1945 di Indonesia dilakukan dengan cara addendum, yaitu naskah asli tetap dipertahankan sementara perubahan dilampirkan sebagai bagian terpisah. Konsekuensi dari model ini adalah...',
+            options:['Naskah asli UUD 1945 dihapus sepenuhnya','Baik naskah asli maupun hasil amandemen sama-sama dapat ditelusuri sebagai dokumen sejarah ketatanegaraan yang utuh','Amandemen menjadi tidak sah secara hukum','UUD 1945 berganti nama menjadi UUD baru','Presiden dapat mengabaikan salah satu bagian sesuai kehendaknya'],
+            answer:'Baik naskah asli maupun hasil amandemen sama-sama dapat ditelusuri sebagai dokumen sejarah ketatanegaraan yang utuh',
+            pembahasan:'Model addendum mempertahankan naskah asli sebagai dokumen historis sekaligus menambahkan hasil perubahan sebagai lampiran resmi, sehingga jejak evolusi ketatanegaraan tetap dapat ditelusuri secara utuh, berbeda dengan model renvoi yang mengganti langsung teks asli.'
+        },
+        {
+            category:'TWK',
+            question:'Munculnya gerakan separatisme di suatu daerah kerap dipicu oleh ketimpangan pembangunan dan minimnya keterwakilan aspirasi lokal dalam kebijakan nasional. Pendekatan yang paling sesuai dengan semangat NKRI untuk merespons akar masalah tersebut adalah...',
+            options:['Operasi militer sebagai solusi tunggal dan pertama','Pendekatan kesejahteraan dan dialog melalui otonomi khusus/desentralisasi asimetris disertai penegakan hukum yang proporsional','Mengabaikan tuntutan daerah sepenuhnya','Memberikan kemerdekaan penuh kepada daerah tersebut','Menutup akses informasi dari dan ke daerah tersebut'],
+            answer:'Pendekatan kesejahteraan dan dialog melalui otonomi khusus/desentralisasi asimetris disertai penegakan hukum yang proporsional',
+            pembahasan:'Akar masalah separatisme yang bersumber dari ketimpangan dan minimnya representasi lebih efektif diatasi dengan pendekatan kesejahteraan, dialog, dan otonomi khusus (contoh: Aceh, Papua), dikombinasikan dengan penegakan hukum yang proporsional, bukan pendekatan represif semata.'
+        },
+        {
+            category:'TWK',
+            question:'Ketentuan bahwa hakim Mahkamah Konstitusi diajukan masing-masing tiga orang oleh Presiden, tiga orang oleh DPR, dan tiga orang oleh Mahkamah Agung, pada dasarnya dirancang untuk mewujudkan prinsip...',
+            options:['Sentralisasi kekuasaan pada satu lembaga','Checks and balances antarcabang kekuasaan dalam pengisian jabatan yudikatif strategis','Dominasi penuh cabang yudikatif','Monopoli DPR atas seluruh lembaga negara','Penghapusan peran eksekutif dalam ketatanegaraan'],
+            answer:'Checks and balances antarcabang kekuasaan dalam pengisian jabatan yudikatif strategis',
+            pembahasan:'Pengajuan hakim MK secara berimbang dari eksekutif (Presiden), legislatif (DPR), dan yudikatif (MA) mencerminkan prinsip checks and balances agar tidak ada satu cabang kekuasaan pun yang mendominasi pengisian lembaga peradilan konstitusi yang strategis.'
+        },
+        {
+            category:'TWK',
+            question:'Ketika terjadi kekosongan jabatan Presiden dan Wakil Presiden secara bersamaan, UUD 1945 mengatur bahwa pelaksana tugas kepresidenan secara berurutan dipegang oleh...',
+            options:['Ketua MPR, kemudian Ketua DPR, kemudian Menteri senior','Menteri Luar Negeri, Menteri Dalam Negeri, dan Menteri Pertahanan secara bersama-sama','Panglima TNI sebagai pemegang kekuasaan sementara','Ketua Mahkamah Agung secara tunggal','Ketua DPD sebagai representasi daerah'],
+            answer:'Menteri Luar Negeri, Menteri Dalam Negeri, dan Menteri Pertahanan secara bersama-sama',
+            pembahasan:'Pasal 8 ayat (3) UUD 1945 mengatur bahwa jika Presiden dan Wakil Presiden mangkat, berhenti, diberhentikan, atau tidak mampu secara bersamaan, tugas kepresidenan dijalankan bersama oleh Menteri Luar Negeri, Menteri Dalam Negeri, dan Menteri Pertahanan hingga MPR memilih Presiden dan Wakil Presiden baru.'
+        },
+        {
+            category:'TWK',
+            question:'Kebijakan hilirisasi industri nikel yang mewajibkan pengolahan di dalam negeri sebelum diekspor, meski sempat digugat di forum perdagangan internasional, tetap dipertahankan pemerintah. Kebijakan ini paling relevan dengan amanat konstitusi...',
+            options:['Pasal 27 tentang persamaan hukum','Pasal 33 ayat (3) tentang penguasaan negara atas sumber daya alam untuk sebesar-besarnya kemakmuran rakyat','Pasal 31 tentang pendidikan nasional','Pasal 29 tentang kebebasan beragama','Pasal 28 tentang kebebasan berserikat'],
+            answer:'Pasal 33 ayat (3) tentang penguasaan negara atas sumber daya alam untuk sebesar-besarnya kemakmuran rakyat',
+            pembahasan:'Pasal 33 ayat (3) UUD 1945 mengamanatkan bahwa bumi, air, dan kekayaan alam dikuasai negara untuk sebesar-besarnya kemakmuran rakyat. Hilirisasi bertujuan meningkatkan nilai tambah dalam negeri agar manfaat ekonomi tidak hanya dinikmati sebagai bahan mentah oleh pihak asing.'
+        },
+        {
+            category:'TWK',
+            question:'Fenomena \'polarisasi politik\' pascapemilu yang memecah masyarakat ke dalam kubu-kubu yang saling curiga dapat mengancam salah satu pilar kebangsaan. Langkah paling strategis dan berkelanjutan untuk memulihkan kohesi sosial pascapemilu adalah...',
+            options:['Melarang seluruh diskusi politik di ruang publik','Rekonsiliasi elite politik dan penguatan pendidikan kewargaan yang menekankan persatuan di atas perbedaan pilihan politik','Membatasi hak pilih kelompok tertentu di pemilu berikutnya','Membubarkan partai yang kalah','Mengabaikan isu tersebut karena dianggap akan reda dengan sendirinya'],
+            answer:'Rekonsiliasi elite politik dan penguatan pendidikan kewargaan yang menekankan persatuan di atas perbedaan pilihan politik',
+            pembahasan:'Polarisasi pascapemilu paling efektif dipulihkan melalui rekonsiliasi elite sebagai teladan publik, dikombinasikan dengan pendidikan kewargaan yang menanamkan bahwa perbedaan pilihan politik adalah hal wajar dalam demokrasi dan tidak boleh mengorbankan persatuan bangsa (Bhinneka Tunggal Ika).'
+        },
+        {
+            category:'TWK',
+            question:'Pancasila dirumuskan melalui proses dialektika panjang dalam sidang BPUPKI, di mana usulan-usulan dari berbagai tokoh disintesiskan menjadi rumusan final dalam Piagam Jakarta yang kemudian mengalami penyempurnaan pada sila pertama. Perubahan tersebut mencerminkan nilai luhur bangsa, yaitu...',
+            options:['Dominasi kelompok mayoritas atas minoritas','Semangat musyawarah dan toleransi demi menjaga persatuan seluruh elemen bangsa yang majemuk','Penolakan terhadap nilai-nilai keagamaan','Intervensi kekuatan asing dalam perumusan dasar negara','Pemaksaan kehendak golongan tertentu'],
+            answer:'Semangat musyawarah dan toleransi demi menjaga persatuan seluruh elemen bangsa yang majemuk',
+            pembahasan:'Perubahan tujuh kata dalam sila pertama Piagam Jakarta menjadi \'Ketuhanan Yang Maha Esa\' merupakan wujud kenegarawanan para pendiri bangsa yang mengedepankan musyawarah dan toleransi, demi menjaga keutuhan bangsa yang majemuk dari sisi agama dan wilayah, khususnya Indonesia bagian timur.'
+        },
+        {
+            category:'TWK',
+            question:'Seorang pejabat publik terbukti menggunakan fasilitas dinas untuk kepentingan kampanye pribadi. Selain melanggar aturan pemilu, tindakan ini juga bertentangan dengan prinsip dasar penyelenggaraan negara yang tertuang dalam UU tentang...',
+            options:['Hak Asasi Manusia semata','Penyelenggara Negara yang Bersih dan Bebas dari Korupsi, Kolusi, dan Nepotisme (KKN)','Perlindungan Konsumen','Kebebasan Pers','Ketenagakerjaan'],
+            answer:'Penyelenggara Negara yang Bersih dan Bebas dari Korupsi, Kolusi, dan Nepotisme (KKN)',
+            pembahasan:'Penyalahgunaan fasilitas negara untuk kepentingan pribadi/kelompok bertentangan dengan asas-asas umum penyelenggaraan negara yang bersih, khususnya asas akuntabilitas dan larangan KKN sebagaimana diatur dalam UU Penyelenggara Negara yang Bersih dan Bebas KKN.'
+        },
+        {
+            category:'TWK',
+            question:'Dalam praktik ketatanegaraan Indonesia, Presiden dapat mengeluarkan Peraturan Pemerintah Pengganti Undang-Undang (Perppu) tanpa persetujuan DPR terlebih dahulu. Namun demikian, kewenangan ini tetap dibatasi oleh mekanisme akuntabilitas berupa...',
+            options:['Perppu berlaku selamanya tanpa peninjauan','Perppu wajib diajukan ke DPR pada persidangan berikutnya untuk disetujui menjadi UU atau dicabut','Perppu hanya dapat dibatalkan oleh Presiden berikutnya','Perppu otomatis batal setelah satu bulan tanpa perlu persetujuan DPR','Perppu memerlukan referendum rakyat'],
+            answer:'Perppu wajib diajukan ke DPR pada persidangan berikutnya untuk disetujui menjadi UU atau dicabut',
+            pembahasan:'Pasal 22 UUD 1945 mengatur bahwa Perppu yang diterbitkan Presiden dalam kegentingan memaksa harus mendapat persetujuan DPR pada persidangan berikutnya; jika ditolak, Perppu tersebut wajib dicabut, sebagai bentuk checks and balances atas kewenangan darurat eksekutif.'
+        },
+        {
+            category:'TWK',
+            question:'Konsep \'Trigatra dan Pancagatra\' dalam wawasan kebangsaan digunakan untuk menganalisis ketahanan nasional secara komprehensif. Trigatra merujuk pada aspek alamiah suatu bangsa, sedangkan Pancagatra merujuk pada...',
+            options:['Aspek sosial yang bersifat dinamis meliputi ideologi, politik, ekonomi, sosial budaya, dan pertahanan keamanan','Aspek geografis semata','Aspek demografi semata','Aspek kekayaan alam semata','Aspek militer semata'],
+            answer:'Aspek sosial yang bersifat dinamis meliputi ideologi, politik, ekonomi, sosial budaya, dan pertahanan keamanan',
+            pembahasan:'Trigatra (geografi, demografi, sumber kekayaan alam) bersifat alamiah/statis, sedangkan Pancagatra (ideologi, politik, ekonomi, sosial budaya, hankam) bersifat sosial dan dinamis. Keduanya membentuk konsep ketahanan nasional Indonesia yang komprehensif (Astagatra).'
+        },
+        {
+            category:'TWK',
+            question:'Sebuah kelompok masyarakat adat menuntut pengakuan atas hutan adat yang telah dikuasai turun-temurun namun tumpang tindih dengan konsesi perusahaan yang memegang izin resmi dari pemerintah. Prinsip konstitusional yang relevan untuk menyelesaikan sengketa tersebut adalah...',
+            options:['Mengabaikan klaim masyarakat adat karena izin resmi bersifat mutlak','Pengakuan negara atas hak masyarakat hukum adat sepanjang masih hidup dan sesuai perkembangan masyarakat, sebagaimana diatur Pasal 18B ayat (2) UUD 1945','Menyerahkan sepenuhnya kepada mekanisme pasar','Membatalkan seluruh izin perusahaan tanpa proses hukum','Menyerahkan keputusan kepada investor asing'],
+            answer:'Pengakuan negara atas hak masyarakat hukum adat sepanjang masih hidup dan sesuai perkembangan masyarakat, sebagaimana diatur Pasal 18B ayat (2) UUD 1945',
+            pembahasan:'Pasal 18B ayat (2) UUD 1945 mengamanatkan negara mengakui dan menghormati kesatuan masyarakat hukum adat beserta hak tradisionalnya, sepanjang masih hidup dan sesuai perkembangan masyarakat, sehingga penyelesaian sengketa harus mempertimbangkan hak konstitusional ini, bukan sekadar aspek administratif perizinan.'
+        },
+        {
+            category:'TWK',
+            question:'ASN dituntut menerapkan manajemen kinerja berbasis merit system dalam pengangkatan jabatan. Nilai dasar yang paling ditegakkan melalui sistem tersebut adalah...',
+            options:['Kedekatan personal dengan atasan','Kompetensi, kualifikasi, dan kinerja sebagai dasar objektif, bukan afiliasi politik atau kekerabatan','Senioritas usia semata','Jumlah tahun kerja tanpa mempertimbangkan kompetensi','Popularitas di media sosial'],
+            answer:'Kompetensi, kualifikasi, dan kinerja sebagai dasar objektif, bukan afiliasi politik atau kekerabatan',
+            pembahasan:'Merit system dalam manajemen ASN menekankan bahwa pengangkatan, promosi, dan mutasi didasarkan pada kompetensi, kualifikasi, dan kinerja secara objektif dan adil, untuk mencegah praktik KKN dan politisasi birokrasi.'
+        },
+        {
+            category:'TWK',
+            question:'Ketika dua provinsi bersengketa mengenai batas wilayah administratif yang berdampak pada potensi pendapatan daerah dari sumber daya alam, penyelesaian yang sesuai koridor NKRI adalah...',
+            options:['Salah satu provinsi memisahkan diri untuk menghindari konflik','Fasilitasi dan keputusan oleh Kementerian Dalam Negeri berdasarkan kajian teknis dan yuridis, dengan opsi penyelesaian ke PTUN jika diperlukan','Referendum warga di wilayah sengketa untuk memilih provinsi baru','Penyelesaian melalui kekuatan militer','Membiarkan sengketa berlarut tanpa intervensi pusat'],
+            answer:'Fasilitasi dan keputusan oleh Kementerian Dalam Negeri berdasarkan kajian teknis dan yuridis, dengan opsi penyelesaian ke PTUN jika diperlukan',
+            pembahasan:'Sengketa batas wilayah antarprovinsi dalam kerangka NKRI diselesaikan melalui mekanisme administratif oleh Kemendagri berdasar kajian teknis-yuridis, dan jika terjadi sengketa kewenangan lebih lanjut dapat ditempuh jalur hukum di PTUN, bukan melalui pemisahan wilayah atau kekerasan.'
+        },
+        {
+            category:'TWK',
+            question:'Keberadaan Dewan Perwakilan Daerah (DPD) dalam sistem parlemen bikameral lemah Indonesia dirancang untuk mengakomodasi kepentingan daerah dalam pembentukan undang-undang tertentu, namun kewenangannya terbatas hanya sampai tahap...',
+            options:['Mengesahkan undang-undang secara mandiri','Mengajukan dan ikut membahas RUU terkait otonomi daerah, namun tidak memiliki hak untuk memutuskan persetujuan akhir seperti DPR','Membubarkan DPR jika terjadi kebuntuan','Memveto seluruh kebijakan Presiden','Menjadi lembaga yudikatif tertinggi'],
+            answer:'Mengajukan dan ikut membahas RUU terkait otonomi daerah, namun tidak memiliki hak untuk memutuskan persetujuan akhir seperti DPR',
+            pembahasan:'DPD berwenang mengajukan dan ikut membahas RUU yang berkaitan dengan otonomi daerah, namun keputusan akhir persetujuan RUU tetap berada di tangan DPR bersama Presiden, mencerminkan sistem bikameral lemah (soft bicameralism) di Indonesia.'
+        },
+        {
+            category:'TWK',
+            question:'Sebuah kebijakan afirmasi memberikan kuota khusus bagi putra-putri Papua dalam seleksi CPNS di instansi pusat. Kebijakan ini secara filosofis merupakan penerapan prinsip keadilan yang bersifat...',
+            options:['Keadilan formal yang menyamaratakan seluruh peserta tanpa pengecualian','Keadilan substantif/afirmatif yang mempertimbangkan kesenjangan struktural demi pemerataan kesempatan yang bermakna','Diskriminasi yang bertentangan dengan konstitusi','Keadilan prosedural semata tanpa mempertimbangkan konteks sosial','Bentuk politik uang terselubung'],
+            answer:'Keadilan substantif/afirmatif yang mempertimbangkan kesenjangan struktural demi pemerataan kesempatan yang bermakna',
+            pembahasan:'Kebijakan afirmasi bertujuan mengoreksi kesenjangan struktural historis agar kesempatan yang setara benar-benar dapat diakses secara bermakna, sejalan dengan prinsip keadilan substantif yang berbeda dari keadilan formal yang sekadar menyamaratakan tanpa mempertimbangkan konteks.'
+        },
+        {
+            category:'TWK',
+            question:'Fenomena hoaks yang menyerang legitimasi pemilu semakin masif menjelang hari pemungutan suara. Kontribusi paling strategis yang dapat diberikan seorang ASN sebagai bagian dari elemen bangsa untuk merespons fenomena ini adalah...',
+            options:['Ikut menyebarkan hoaks yang menguntungkan kandidat pilihannya','Bersikap netral, aktif melakukan verifikasi informasi (cek fakta), dan mengedukasi lingkungan sekitar tentang literasi digital','Memilih tidak peduli karena bukan bagian dari tugas kedinasan','Menghapus seluruh akun media sosial','Membalas hoaks dengan hoaks tandingan'],
+            answer:'Bersikap netral, aktif melakukan verifikasi informasi (cek fakta), dan mengedukasi lingkungan sekitar tentang literasi digital',
+            pembahasan:'Sebagai unsur aparatur negara yang wajib netral, ASN dituntut berperan aktif menjaga kualitas informasi publik dengan melakukan verifikasi (cek fakta) dan edukasi literasi digital, sejalan dengan tanggung jawab menjaga kohesi sosial dan integritas proses demokrasi.'
+        },
+        {
+            category:'TWK',
+            question:'Ideologi Pancasila bersifat terbuka (ideologi terbuka), yang berarti...',
+            options:['Nilai dasarnya dapat diubah sesuai kepentingan penguasa yang berkuasa','Nilai dasarnya tetap, namun penjabarannya dapat berkembang dinamis mengikuti perkembangan zaman tanpa mengubah esensi dasarnya','Boleh digantikan sepenuhnya oleh ideologi asing','Tidak memiliki nilai dasar yang tetap sama sekali','Hanya berlaku bagi generasi pendiri bangsa'],
+            answer:'Nilai dasarnya tetap, namun penjabarannya dapat berkembang dinamis mengikuti perkembangan zaman tanpa mengubah esensi dasarnya',
+            pembahasan:'Sebagai ideologi terbuka, Pancasila memiliki nilai dasar yang bersifat tetap (permanen), namun nilai instrumental dan praksisnya dapat dijabarkan secara dinamis mengikuti perkembangan zaman, tanpa mengubah esensi kelima silanya.'
+        },
+        {
+            category:'TWK',
+            question:'Ketika terjadi bencana alam besar yang melumpuhkan pemerintahan daerah setempat, kewenangan pengambilalihan sementara fungsi koordinasi tanggap darurat oleh pemerintah pusat merupakan penerapan asas...',
+            options:['Desentralisasi murni tanpa batas','Dekonsentrasi dan tugas pembantuan yang tetap memberi ruang intervensi pusat demi kepentingan nasional dalam situasi tertentu','Federalisme','Otonomi seluas-luasnya tanpa pengecualian','Privatisasi layanan publik'],
+            answer:'Dekonsentrasi dan tugas pembantuan yang tetap memberi ruang intervensi pusat demi kepentingan nasional dalam situasi tertentu',
+            pembahasan:'Meski Indonesia menganut desentralisasi, asas dekonsentrasi dan tugas pembantuan tetap memberi ruang bagi pemerintah pusat untuk turun tangan dalam situasi darurat yang melampaui kapasitas daerah, tanpa menghapus prinsip otonomi daerah secara keseluruhan.'
+        },
+        {
+            category:'TWK',
+            question:'Perdebatan mengenai batas usia pensiun ASN yang dinaikkan bertujuan mempertahankan pegawai berpengalaman, namun dikritik dapat menghambat regenerasi. Dilema kebijakan ini paling tepat mencerminkan tantangan dalam mewujudkan...',
+            options:['Keseimbangan antara efisiensi birokrasi jangka pendek dan keberlanjutan regenerasi sumber daya manusia jangka panjang','Penghapusan total sistem karier ASN','Politisasi jabatan ASN','Diskriminasi terhadap ASN muda','Penambahan gaji ASN'],
+            answer:'Keseimbangan antara efisiensi birokrasi jangka pendek dan keberlanjutan regenerasi sumber daya manusia jangka panjang',
+            pembahasan:'Kebijakan batas usia pensiun mencerminkan dilema antara mempertahankan pengalaman dan kompetensi senior (efisiensi jangka pendek) dengan kebutuhan membuka ruang bagi talenta muda (regenerasi jangka panjang), yang harus dikelola secara seimbang dalam manajemen ASN modern.'
+        },
+        {
+            category:'TWK',
+            question:'Dalam hierarki peraturan perundang-undangan Indonesia berdasarkan UU No. 12 Tahun 2011 (sebagaimana diubah), kedudukan Peraturan Presiden berada...',
+            options:['Di atas Undang-Undang','Di bawah Peraturan Pemerintah dan di atas Peraturan Daerah Provinsi','Setara dengan UUD 1945','Di bawah Peraturan Daerah Kabupaten/Kota','Tidak termasuk dalam hierarki resmi'],
+            answer:'Di bawah Peraturan Pemerintah dan di atas Peraturan Daerah Provinsi',
+            pembahasan:'Hierarki peraturan perundang-undangan secara berurutan: UUD 1945, Ketetapan MPR, UU/Perppu, Peraturan Pemerintah, Peraturan Presiden, Peraturan Daerah Provinsi, dan Peraturan Daerah Kabupaten/Kota, sesuai asas lex superior derogat legi inferiori.'
+        },
+        {
+            category:'TWK',
+            question:'Konsep \'satu komando\' dalam sistem pertahanan negara Indonesia menegaskan bahwa TNI berada di bawah kendali...',
+            options:['Panglima TNI secara independen tanpa kendali sipil','Presiden selaku pemegang kekuasaan tertinggi atas Angkatan Darat, Laut, dan Udara sesuai prinsip supremasi sipil','DPR sepenuhnya tanpa keterlibatan Presiden','Menteri Pertahanan secara mandiri tanpa persetujuan Presiden','Mahkamah Agung'],
+            answer:'Presiden selaku pemegang kekuasaan tertinggi atas Angkatan Darat, Laut, dan Udara sesuai prinsip supremasi sipil',
+            pembahasan:'Pasal 10 UUD 1945 menegaskan Presiden memegang kekuasaan tertinggi atas Angkatan Darat, Angkatan Laut, dan Angkatan Udara, mencerminkan prinsip supremasi sipil atas militer yang menjadi ciri negara demokrasi konstitusional pasca-reformasi.'
+        },
+        {
+            category:'TWK',
+            question:'Munculnya gerakan-gerakan berbasis identitas primordial yang menolak keberagaman merupakan tantangan langsung terhadap konsensus dasar berbangsa, khususnya...',
+            options:['Pancasila dan Bhinneka Tunggal Ika sebagai perekat persatuan di tengah kemajemukan','UUD 1945 semata','NKRI semata tanpa kaitan ideologis','Sistem ekonomi Pancasila','Otonomi daerah semata'],
+            answer:'Pancasila dan Bhinneka Tunggal Ika sebagai perekat persatuan di tengah kemajemukan',
+            pembahasan:'Gerakan berbasis identitas primordial yang eksklusif secara langsung mengancam dua dari empat konsensus dasar berbangsa, yaitu Pancasila sebagai dasar dan pemersatu ideologis, serta Bhinneka Tunggal Ika sebagai semboyan yang merangkul keberagaman dalam satu kesatuan bangsa.'
+        },
+        {
+            category:'TWK',
+            question:'Ketentuan bahwa perubahan UUD 1945 hanya dapat dilakukan jika diajukan oleh sekurang-kurangnya 1/3 anggota MPR dan disetujui oleh 50%+1 dari seluruh anggota dengan kehadiran minimal 2/3, merupakan mekanisme yang dirancang untuk...',
+            options:['Mempermudah perubahan konstitusi sesuka kepentingan politik sesaat','Menjaga stabilitas dan kesakralan konstitusi agar tidak mudah diubah tanpa dukungan luas dan representatif','Menghapus fungsi MPR sepenuhnya','Memberikan kekuasaan mutlak kepada Presiden atas konstitusi','Mempercepat proses legislasi biasa'],
+            answer:'Menjaga stabilitas dan kesakralan konstitusi agar tidak mudah diubah tanpa dukungan luas dan representatif',
+            pembahasan:'Syarat kuorum dan persetujuan suara yang tinggi (rigid constitution) dalam mekanisme amandemen UUD 1945 dirancang agar konstitusi sebagai hukum dasar negara tidak mudah diubah secara sepihak, sehingga tetap stabil dan hanya berubah dengan dukungan politik yang luas dan representatif.'
+        },
+        {
+            category:'TIU',
+            question:'DEFLASI : PENURUNAN HARGA = STAGFLASI : ...',
+            options:['Kenaikan harga disertai pertumbuhan ekonomi tinggi','Stagnasi ekonomi yang berbarengan dengan inflasi tinggi','Penurunan harga tanpa pertumbuhan','Kestabilan harga jangka panjang','Deflasi berkepanjangan'],
+            answer:'Stagnasi ekonomi yang berbarengan dengan inflasi tinggi',
+            pembahasan:'Deflasi didefinisikan sebagai penurunan harga umum. Stagflasi didefinisikan sebagai kondisi stagnasi pertumbuhan ekonomi yang terjadi bersamaan dengan inflasi tinggi — pola analoginya adalah istilah ekonomi dan definisinya.'
+        },
+        {
+            category:'TIU',
+            question:'Semua auditor yang bersertifikasi internasional memiliki izin praktik nasional. Sebagian pemegang izin praktik nasional belum bersertifikasi internasional. Budi adalah auditor bersertifikasi internasional. Kesimpulan yang pasti benar adalah...',
+            options:['Budi belum tentu memiliki izin praktik nasional','Budi memiliki izin praktik nasional','Semua pemegang izin praktik nasional bersertifikasi internasional','Budi tidak memiliki sertifikasi apapun','Tidak ada kesimpulan yang dapat ditarik'],
+            answer:'Budi memiliki izin praktik nasional',
+            pembahasan:'Premis pertama menyatakan seluruh auditor bersertifikasi internasional otomatis memiliki izin praktik nasional. Karena Budi termasuk kategori tersebut, maka pasti Budi memiliki izin praktik nasional.'
+        },
+        {
+            category:'TIU',
+            question:'Sebuah pabrik memproduksi barang dengan tingkat cacat 2% dari total produksi. Jika dari 15.000 unit yang diproduksi ditemukan 375 unit cacat setelah dilakukan perbaikan proses, maka persentase cacat aktual adalah...',
+            options:['1,5%','2%','2,5%','3%','4%'],
+            answer:'2,5%',
+            pembahasan:'Persentase cacat aktual = (375/15.000) × 100% = 2,5%, lebih tinggi dari target 2%, menunjukkan proses perbaikan belum mencapai target yang diharapkan.'
+        },
+        {
+            category:'TIU',
+            question:'Lanjutkan pola deret berikut: 3, 7, 15, 31, 63, ...',
+            options:['95','111','127','135','159'],
+            answer:'127',
+            pembahasan:'Pola: setiap suku adalah (suku sebelumnya × 2) + 1. Maka 63×2+1 = 127. Pola ini juga setara dengan 2ⁿ−1 (n=2,3,4,5,6,7 menghasilkan 3,7,15,31,63,127).'
+        },
+        {
+            category:'TIU',
+            question:'Jika kode \'RUMIT\' ditulis sebagai \'TWOKV\' dengan pola pergeseran huruf tertentu, maka kode untuk \'BERAT\' adalah...',
+            options:['DGTCV','DGSCV','CFTBU','DGTCU','EGTCV'],
+            answer:'DGTCV',
+            pembahasan:'Pola menggeser setiap huruf maju 2 posisi dalam alfabet (R→T, U→W, M→O, I→K, T→V). Diterapkan pada \'BERAT\': B→D, E→G, R→T, A→C, T→V, menghasilkan \'DGTCV\'.'
+        },
+        {
+            category:'TIU',
+            question:'Sebuah proyek dikerjakan oleh tim A dalam 20 hari, sedangkan tim B dapat menyelesaikan proyek yang sama dalam 30 hari. Jika kedua tim bekerja bersama selama 8 hari lalu tim A berhenti, berapa hari tambahan yang dibutuhkan tim B untuk menyelesaikan sisa pekerjaan?',
+            options:['6 hari','7 hari','8 hari','9 hari','10 hari'],
+            answer:'10 hari',
+            pembahasan:'Laju A=1/20, B=1/30. Bersama 8 hari: 8×(1/20+1/30)=8×(5/60)=8×1/12=8/12=2/3 pekerjaan selesai. Sisa 1/3. Waktu B menyelesaikan sisa = (1/3)/(1/30) = 10 hari. (Catatan: opsi terdekat 10 hari adalah jawaban yang benar secara perhitungan; pilih opsi yang sesuai hasil hitung).'
+        },
+        {
+            category:'TIU',
+            question:'ANTIPATI >< ...',
+            options:['Antusiasme','Kebencian','Apatis','Ketidakpedulian','Kekecewaan'],
+            answer:'Antusiasme',
+            pembahasan:'Antipati berarti perasaan tidak suka atau menentang. Lawan katanya adalah antusiasme, yaitu semangat dan minat yang besar terhadap sesuatu.'
+        },
+        {
+            category:'TIU',
+            question:'Dalam sebuah survei, 60% responden menyukai kopi, 45% menyukai teh, dan 20% menyukai keduanya. Berapa persen responden yang tidak menyukai kopi maupun teh?',
+            options:['10%','15%','20%','25%','30%'],
+            answer:'15%',
+            pembahasan:'Menggunakan prinsip inklusi-eksklusi: suka kopi ATAU teh = 60%+45%-20% = 85%. Maka yang tidak menyukai keduanya = 100%-85% = 15%.'
+        },
+        {
+            category:'TIU',
+            question:'Sebuah kereta melaju dengan kecepatan 90 km/jam menempuh jarak antara dua kota dalam 2 jam 40 menit. Jika kecepatan dinaikkan menjadi 120 km/jam, waktu tempuh yang dibutuhkan adalah...',
+            options:['1 jam 45 menit','2 jam','2 jam 15 menit','2 jam 30 menit','1 jam 30 menit'],
+            answer:'2 jam',
+            pembahasan:'Jarak = 90 × (2+40/60) = 90 × 8/3 = 240 km. Waktu baru = 240/120 = 2 jam.'
+        },
+        {
+            category:'TIU',
+            question:'Premis 1: Jika inflasi naik tajam, maka daya beli masyarakat menurun. Premis 2: Daya beli masyarakat tidak menurun. Kesimpulan yang sah secara logika (modus tollens) adalah...',
+            options:['Inflasi naik tajam','Inflasi tidak naik tajam','Daya beli pasti naik','Tidak dapat disimpulkan apapun','Inflasi dan daya beli tidak berhubungan'],
+            answer:'Inflasi tidak naik tajam',
+            pembahasan:'Berdasarkan modus tollens (~q → ~p dari p→q): karena konsekuen (daya beli menurun) terbukti salah/tidak terjadi, maka anteseden (inflasi naik tajam) juga pasti salah, sehingga kesimpulannya inflasi tidak naik tajam.'
+        },
+        {
+            category:'TIU',
+            question:'Sebuah larutan memiliki konsentrasi garam 8%. Jika ditambahkan 200 ml air murni ke dalam 800 ml larutan tersebut, konsentrasi garam yang baru adalah...',
+            options:['5,6%','6%','6,4%','6,8%','7%'],
+            answer:'6,4%',
+            pembahasan:'Massa garam tetap = 8% × 800 = 64 ml (setara). Volume baru = 800+200 = 1000 ml. Konsentrasi baru = 64/1000 = 6,4%.'
+        },
+        {
+            category:'TIU',
+            question:'Pola figural: sebuah bentuk segitiga berputar 90° searah jarum jam setiap tahap, sekaligus jumlah titik di dalamnya bertambah 2 setiap tahap dimulai dari 1 titik. Jumlah titik pada tahap ke-6 adalah...',
+            options:['9','10','11','12','13'],
+            answer:'11',
+            pembahasan:'Pola aritmetika titik: 1,3,5,7,9,11,... (bertambah 2 setiap tahap). Tahap ke-6 = 1+2×(6-1) = 1+10 = 11 titik, terlepas dari rotasi bentuknya.'
+        },
+        {
+            category:'TIU',
+            question:'KURVA PERMINTAAN : HARGA TURUN = KURVA PENAWARAN : ...',
+            options:['Harga naik','Kuantitas turun','Harga turun juga','Permintaan naik','Penawaran turun'],
+            answer:'Harga naik',
+            pembahasan:'Pada kurva permintaan, saat harga turun, kuantitas diminta naik (hubungan berbanding terbalik). Pada kurva penawaran, saat harga naik, kuantitas ditawarkan naik (hubungan berbanding lurus) — polanya adalah arah pergerakan harga yang memicu kenaikan kuantitas pada masing-masing kurva.'
+        },
+        {
+            category:'TIU',
+            question:'Sebuah investasi tumbuh dengan bunga majemuk 10% per tahun. Jika modal awal Rp10.000.000, nilai investasi setelah 3 tahun (dibulatkan) adalah...',
+            options:['Rp13.000.000','Rp13.100.000','Rp13.310.000','Rp13.400.000','Rp14.000.000'],
+            answer:'Rp13.310.000',
+            pembahasan:'Rumus bunga majemuk: 10.000.000 × (1,1)³ = 10.000.000 × 1,331 = Rp13.310.000.'
+        },
+        {
+            category:'TIU',
+            question:'Jika semua pejabat yang berintegritas menolak gratifikasi, dan sebagian pejabat yang menolak gratifikasi bukan pejabat senior, maka pernyataan yang PASTI SALAH adalah...',
+            options:['Ada pejabat berintegritas yang bukan pejabat senior','Semua pejabat senior berintegritas','Ada pejabat yang menolak gratifikasi tapi tidak berintegritas','Sebagian pejabat berintegritas bukan pejabat senior','Tidak semua pejabat menolak gratifikasi'],
+            answer:'Semua pejabat senior berintegritas',
+            pembahasan:'Dari premis yang ada, tidak dapat disimpulkan bahwa SEMUA pejabat senior pasti berintegritas — pernyataan ini melampaui informasi yang tersedia dan bersifat generalisasi berlebihan, sehingga pasti tidak dapat dibenarkan hanya dari premis yang diberikan.'
+        },
+        {
+            category:'TIU',
+            question:'Sinonim kata \'KONTIJENSI\' dalam konteks manajemen risiko adalah...',
+            options:['Kepastian','Rencana cadangan atas kemungkinan yang belum tentu terjadi','Kegagalan total','Efisiensi anggaran','Audit rutin'],
+            answer:'Rencana cadangan atas kemungkinan yang belum tentu terjadi',
+            pembahasan:'Kontijensi merujuk pada suatu kondisi/rencana yang disiapkan untuk mengantisipasi kemungkinan (yang belum pasti) terjadi, seperti dana atau rencana cadangan dalam manajemen risiko.'
+        },
+        {
+            category:'TIU',
+            question:'Sebuah panitia seleksi terdiri dari 5 pria dan 4 wanita. Jika akan dipilih 3 orang secara acak untuk menjadi tim inti, berapa peluang terpilihnya tim yang seluruhnya pria?',
+            options:['5/42','10/84','5/42 setara 10/84','1/12','5/36'],
+            answer:'5/42 setara 10/84',
+            pembahasan:'Total cara memilih 3 dari 9 orang = C(9,3)=84. Cara memilih 3 pria dari 5 = C(5,3)=10. Peluang = 10/84 = 5/42.'
+        },
+        {
+            category:'TIU',
+            question:'Lanjutkan deret huruf berikut: A, D, I, P, Y, ...',
+            options:['AB','AJ','AL','AH','AF'],
+            answer:'AJ',
+            pembahasan:'Selisih posisi alfabet: A(1),D(4),I(9),P(16),Y(25) — pola kuadrat (1²,2²,3²,4²,5²). Suku berikutnya adalah 6²=36, yaitu huruf ke-36 dalam urutan alfabet berulang: 36-26=10, huruf ke-10 adalah J, tetapi karena melewati satu putaran alfabet, notasinya menjadi \'AJ\' (siklus kedua, huruf ke-10).'
+        },
+        {
+            category:'TIU',
+            question:'Sebuah perusahaan mencatat penurunan penjualan 15% pada kuartal kedua dibanding kuartal pertama, namun naik 25% pada kuartal ketiga dibanding kuartal kedua. Jika penjualan kuartal pertama adalah Rp400 juta, penjualan kuartal ketiga adalah...',
+            options:['Rp410 juta','Rp415 juta','Rp420 juta','Rp425 juta','Rp430 juta'],
+            answer:'Rp425 juta',
+            pembahasan:'Kuartal 2 = 400 juta × 0,85 = 340 juta. Kuartal 3 = 340 juta × 1,25 = 425 juta.'
+        },
+        {
+            category:'TIU',
+            question:'Premis: \'Tidak ada kebijakan publik yang sempurna tanpa dampak samping.\' Pernyataan yang secara logis EKUIVALEN dengan premis tersebut adalah...',
+            options:['Semua kebijakan publik sempurna memiliki dampak samping','Jika suatu kebijakan publik tidak memiliki dampak samping, maka kebijakan itu tidak sempurna','Semua kebijakan publik pasti buruk','Kebijakan publik yang sempurna tidak mungkin ada','Dampak samping selalu lebih besar dari manfaatnya'],
+            answer:'Jika suatu kebijakan publik tidak memiliki dampak samping, maka kebijakan itu tidak sempurna',
+            pembahasan:'Pernyataan \'tidak ada X yang Y tanpa Z\' setara dengan \'semua X yang Y pasti memiliki Z\', yang secara kontraposisi setara dengan \'jika tidak memiliki Z, maka tidak Y\' — yaitu jika kebijakan tidak berdampak samping, maka ia tidak sempurna.'
+        },
+        {
+            category:'TIU',
+            question:'MITIGASI BENCANA : PENGURANGAN RISIKO = ASURANSI : ...',
+            options:['Peningkatan risiko','Pengalihan risiko finansial','Penghapusan risiko total','Penyebab risiko','Investasi jangka panjang semata'],
+            answer:'Pengalihan risiko finansial',
+            pembahasan:'Mitigasi bencana bertujuan mengurangi risiko dampak bencana. Asuransi berfungsi mengalihkan risiko finansial dari individu/entitas kepada perusahaan asuransi — polanya adalah instrumen dan fungsi utamanya terhadap risiko.'
+        },
+        {
+            category:'TIU',
+            question:'Sebuah bak air terisi oleh dua pipa. Pipa A dapat mengisi penuh dalam 6 jam, pipa B dalam 4 jam, sementara pipa pembuangan C dapat mengosongkan bak penuh dalam 12 jam. Jika ketiganya dibuka bersamaan, waktu yang dibutuhkan untuk mengisi bak hingga penuh adalah...',
+            options:['2 jam','2,4 jam','3 jam','3,5 jam','4 jam'],
+            answer:'3 jam',
+            pembahasan:'Laju gabungan = 1/6+1/4-1/12 = 2/12+3/12-1/12 = 4/12 = 1/3 bak per jam. Waktu = 1/(1/3) = 3 jam.'
+        },
+        {
+            category:'TIU',
+            question:'Jika \'semua yang efisien itu hemat energi\' bernilai benar, maka pernyataan yang PASTI SALAH secara logika adalah...',
+            options:['Ada yang hemat energi tapi tidak efisien','Ada sesuatu yang efisien namun boros energi','Semua yang hemat energi itu efisien','Tidak semua yang hemat energi itu efisien','Sesuatu yang tidak efisien mungkin saja boros energi'],
+            answer:'Ada sesuatu yang efisien namun boros energi',
+            pembahasan:'Karena premis menyatakan semua yang efisien PASTI hemat energi, maka pernyataan yang mengklaim ada yang efisien namun boros energi bertentangan langsung dengan premis dan pasti salah.'
+        },
+        {
+            category:'TIU',
+            question:'Sebuah proyek infrastruktur direncanakan selesai 18 bulan dengan 40 pekerja. Setelah 6 bulan berjalan, progres baru mencapai 25% dan manajemen menambah pekerja agar proyek selesai tepat waktu. Jika produktivitas per pekerja tetap sama, jumlah total pekerja yang dibutuhkan agar proyek selesai tepat waktu adalah...',
+            options:['48 pekerja','50 pekerja','55 pekerja','60 pekerja','64 pekerja'],
+            answer:'60 pekerja',
+            pembahasan:'Dalam 6 bulan dengan 40 pekerja, dihasilkan 25% progres, artinya laju = 40 pekerja menghasilkan 25%/6 bulan. Sisa 75% harus selesai dalam 12 bulan sisa. Jika laju linear terhadap jumlah pekerja: (40 × 6)/25 = (X × 12)/75 → X = (40×6×75)/(25×12) = 60. (Perhitungan estimasi; pilih opsi terdekat sesuai metode proporsional pekerja-bulan).'
+        },
+        {
+            category:'TIU',
+            question:'ANTONIM kata \'REDUNDAN\' dalam konteks birokrasi adalah...',
+            options:['Berlebihan','Efisien dan tidak ada duplikasi fungsi','Kompleks','Lambat','Terpusat'],
+            answer:'Efisien dan tidak ada duplikasi fungsi',
+            pembahasan:'Redundan berarti berlebihan atau terjadi duplikasi (misalnya fungsi/jabatan yang tumpang tindih). Lawan katanya adalah kondisi yang efisien tanpa duplikasi fungsi yang tidak perlu.'
+        },
+        {
+            category:'TIU',
+            question:'Sebuah data menunjukkan korelasi positif kuat antara jumlah CCTV yang dipasang dengan penurunan angka kriminalitas di suatu wilayah selama 5 tahun terakhir. Kesimpulan yang PALING HATI-HATI dan tepat secara metodologis adalah...',
+            options:['Pemasangan CCTV pasti satu-satunya penyebab turunnya kriminalitas','Korelasi menunjukkan hubungan, namun diperlukan analisis lebih lanjut untuk memastikan hubungan sebab-akibat karena mungkin ada faktor lain yang turut memengaruhi','Tidak ada hubungan sama sekali antara CCTV dan kriminalitas','Kriminalitas akan hilang total jika CCTV diperbanyak lagi','Data tersebut pasti keliru karena tidak masuk akal'],
+            answer:'Korelasi menunjukkan hubungan, namun diperlukan analisis lebih lanjut untuk memastikan hubungan sebab-akibat karena mungkin ada faktor lain yang turut memengaruhi',
+            pembahasan:'Prinsip dasar statistika menegaskan \'korelasi tidak selalu sama dengan kausalitas\' (correlation does not imply causation). Faktor lain seperti peningkatan patroli, ekonomi, atau kebijakan sosial lain bisa jadi turut berkontribusi, sehingga kesimpulan sebab-akibat tunggal terlalu terburu-buru.'
+        },
+        {
+            category:'TIU',
+            question:'Jika harga suatu barang naik 20% kemudian turun 20% dari harga barunya, maka harga akhir dibandingkan harga semula adalah...',
+            options:['Sama dengan harga semula','Turun 4% dari harga semula','Naik 4% dari harga semula','Turun 2% dari harga semula','Naik 2% dari harga semula'],
+            answer:'Turun 4% dari harga semula',
+            pembahasan:'Misal harga awal 100. Naik 20% menjadi 120. Turun 20% dari 120 = 120 × 0,8 = 96. Dibanding 100, ini turun 4%, menunjukkan kenaikan dan penurunan persentase yang sama tidak saling meniadakan secara nominal.'
+        },
+        {
+            category:'TIU',
+            question:'Dalam sebuah organisasi, jika \'A\' adalah syarat perlu (necessary condition) bagi \'B\', maka pernyataan yang tepat adalah...',
+            options:['A pasti terjadi jika B terjadi','B pasti terjadi jika A terjadi','A dan B tidak saling berkaitan','B dapat terjadi tanpa A','A tidak relevan terhadap B'],
+            answer:'A pasti terjadi jika B terjadi',
+            pembahasan:'Jika A adalah syarat perlu bagi B, artinya B tidak mungkin terjadi tanpa A terlebih dahulu terpenuhi, sehingga jika B terjadi maka A pasti sudah terjadi (B→A), berbeda dengan syarat cukup yang berarti A→B.'
+        },
+        {
+            category:'TIU',
+            question:'Sebuah bilangan terdiri dari 3 digit. Digit ratusan adalah dua kali digit satuan, dan digit puluhan adalah jumlah dari digit ratusan dan satuan. Jika digit satuan adalah 3, maka bilangan tersebut adalah...',
+            options:['639','693','936','369','396'],
+            answer:'693',
+            pembahasan:'Digit satuan = 3. Digit ratusan = 2×3 = 6. Digit puluhan = 6+3 = 9. Bilangan tersusun: ratusan-puluhan-satuan = 6-9-3 = 693.'
+        },
+        {
+            category:'TIU',
+            question:'REGULASI KETAT : INOVASI TERHAMBAT = DEREGULASI BERLEBIHAN : ...',
+            options:['Stabilitas pasar terjamin penuh','Potensi risiko sistemik meningkat akibat lemahnya pengawasan','Inovasi otomatis meningkat tanpa risiko','Birokrasi semakin efisien tanpa dampak negatif','Tidak ada dampak apapun'],
+            answer:'Potensi risiko sistemik meningkat akibat lemahnya pengawasan',
+            pembahasan:'Regulasi yang terlalu ketat dapat menghambat inovasi; sebaliknya deregulasi yang berlebihan tanpa pengawasan memadai berisiko meningkatkan risiko sistemik (seperti krisis keuangan) — polanya adalah konsekuensi negatif dari dua ekstrem kebijakan yang berlawanan.'
+        },
+        {
+            category:'TIU',
+            question:'Dari 200 pelamar CPNS, 120 orang lulus SKD, 90 orang lulus SKB, dan 60 orang lulus keduanya. Jumlah pelamar yang tidak lulus SKD maupun SKB adalah...',
+            options:['30 orang','40 orang','50 orang','60 orang','70 orang'],
+            answer:'50 orang',
+            pembahasan:'Lulus SKD atau SKB = 120+90-60 = 150. Tidak lulus keduanya = 200-150 = 50 orang.'
+        },
+        {
+            category:'TIU',
+            question:'Suatu perusahaan menaikkan gaji seluruh pegawai sebesar 8%, namun karena inflasi sebesar 5% pada periode yang sama, maka daya beli riil pegawai...',
+            options:['Naik tepat 8%','Naik sekitar 3%, bukan 8%, karena inflasi mengurangi nilai riil kenaikan nominal','Turun 5%','Tetap sama karena saling meniadakan','Naik 13%'],
+            answer:'Naik sekitar 3%, bukan 8%, karena inflasi mengurangi nilai riil kenaikan nominal',
+            pembahasan:'Kenaikan gaji nominal 8% harus dikurangi tingkat inflasi 5% untuk mendapatkan kenaikan daya beli riil, yaitu mendekati 3% (secara sederhana 8%-5%), bukan langsung 8% seperti kenaikan nominalnya.'
+        },
+        {
+            category:'TIU',
+            question:'Manakah simpulan yang PALING VALID dari premis: \'Setiap kebijakan yang partisipatif melibatkan konsultasi publik, dan kebijakan tata ruang kota X tidak melibatkan konsultasi publik\'?',
+            options:['Kebijakan tata ruang kota X pasti buruk','Kebijakan tata ruang kota X bukan kebijakan yang partisipatif','Kebijakan tata ruang kota X pasti ditolak masyarakat','Semua kebijakan partisipatif pasti baik','Konsultasi publik tidak penting'],
+            answer:'Kebijakan tata ruang kota X bukan kebijakan yang partisipatif',
+            pembahasan:'Menggunakan modus tollens: jika partisipatif→ada konsultasi publik, dan kebijakan X tidak ada konsultasi publik (~konsekuen), maka pasti kebijakan X bukan partisipatif (~anteseden).'
+        },
+        {
+            category:'TIU',
+            question:'Sebuah tangki berbentuk balok berukuran panjang 2 m, lebar 1,5 m, dan tinggi 1 m akan diisi air menggunakan pompa berkapasitas 25 liter/menit. Waktu yang dibutuhkan untuk mengisi tangki hingga penuh adalah...',
+            options:['100 menit','110 menit','115 menit','120 menit','125 menit'],
+            answer:'120 menit',
+            pembahasan:'Volume tangki = 2×1,5×1 = 3 m³ = 3.000 liter. Waktu = 3.000/25 = 120 menit.'
+        },
+        {
+            category:'TIU',
+            question:'EFEK DOMINO dalam konteks krisis ekonomi paling tepat dianalogikan dengan...',
+            options:['Perbaikan satu sektor yang tidak memengaruhi sektor lain','Kegagalan satu institusi finansial besar yang memicu kegagalan berantai pada institusi terkait lainnya','Pertumbuhan ekonomi yang stabil dan merata','Kebijakan yang berdiri sendiri tanpa dampak sistemik','Investasi jangka panjang yang aman'],
+            answer:'Kegagalan satu institusi finansial besar yang memicu kegagalan berantai pada institusi terkait lainnya',
+            pembahasan:'Efek domino menggambarkan rangkaian kegagalan yang saling berkaitan, di mana kegagalan satu elemen (seperti bank besar) memicu kegagalan elemen-elemen lain yang terhubung dalam sistem, sebagaimana domino yang jatuh berurutan.'
+        },
+        {
+            category:'TKP',
+            question:'Anda memimpin tim lintas divisi untuk proyek strategis dengan tenggat sangat ketat. Di tengah jalan, salah satu anggota tim senior menolak mengikuti metode kerja baru yang Anda usulkan dan lebih memilih cara lama yang menurutnya terbukti, meski data menunjukkan cara baru lebih efisien. Sikap Anda adalah...',
+            options:[{text:'Memaksakan metode baru tanpa diskusi karena Anda adalah pemimpin proyek',score:2},{text:'Membiarkan anggota tersebut memakai cara lama demi menghindari konflik',score:2},{text:'Mengajak diskusi terbuka, menunjukkan data pendukung, dan mencari titik temu yang tetap mengakomodasi pengalamannya',score:5},{text:'Melaporkan sikap penolakannya kepada atasan tanpa mencoba berdiskusi langsung',score:1},{text:'Mengeluarkan anggota tersebut dari tim secara sepihak',score:1}],
+            answer:'Mengajak diskusi terbuka, menunjukkan data pendukung, dan mencari titik temu yang tetap mengakomodasi pengalamannya',
+            pembahasan:'Pendekatan berbasis data disertai dialog terbuka yang tetap menghargai pengalaman anggota tim mencerminkan kepemimpinan kolaboratif dan orientasi hasil yang efektif tanpa mengabaikan hubungan interpersonal.'
+        },
+        {
+            category:'TKP',
+            question:'Saat menjadi penanggung jawab layanan publik, Anda mendapati antrean masyarakat yang sangat panjang akibat sistem digital yang tiba-tiba error, sementara atasan sedang tidak dapat dihubungi. Sikap Anda adalah...',
+            options:[{text:'Menutup layanan dan menyuruh masyarakat kembali esok hari',score:1},{text:'Menunggu pasif hingga atasan dapat dihubungi',score:2},{text:'Mengambil inisiatif menerapkan prosedur manual sementara sambil terus berupaya menghubungi tim IT dan atasan',score:5},{text:'Membiarkan antrean menumpuk tanpa tindakan apapun',score:1},{text:'Mengalihkan seluruh tanggung jawab kepada rekan kerja lain',score:2}],
+            answer:'Mengambil inisiatif menerapkan prosedur manual sementara sambil terus berupaya menghubungi tim IT dan atasan',
+            pembahasan:'Inisiatif mengambil solusi manual sementara demi keberlangsungan pelayanan publik, sambil tetap berupaya berkoordinasi dengan pihak berwenang, mencerminkan orientasi pelayanan dan pengambilan keputusan yang responsif dalam situasi darurat.'
+        },
+        {
+            category:'TKP',
+            question:'Anda menemukan bahwa rekan satu tim yang juga sahabat dekat Anda telah memanipulasi data laporan kinerja untuk terlihat lebih baik dari kondisi sebenarnya. Sikap Anda adalah...',
+            options:[{text:'Menutupi hal tersebut demi menjaga persahabatan',score:1},{text:'Langsung melaporkan ke atasan tanpa berbicara terlebih dahulu dengan yang bersangkutan',score:3},{text:'Berbicara langsung kepadanya untuk memperbaiki data tersebut, dan jika tidak ada perbaikan, melaporkannya sesuai prosedur',score:5},{text:'Ikut serta memanipulasi data agar terlihat solid sebagai tim',score:1},{text:'Diam saja karena bukan urusan Anda',score:1}],
+            answer:'Berbicara langsung kepadanya untuk memperbaiki data tersebut, dan jika tidak ada perbaikan, melaporkannya sesuai prosedur',
+            pembahasan:'Menegakkan integritas dengan terlebih dahulu memberi kesempatan perbaikan secara langsung, namun tetap bersedia menempuh jalur formal jika diperlukan, mencerminkan keseimbangan antara loyalitas personal dan tanggung jawab profesional terhadap kebenaran data.'
+        },
+        {
+            category:'TKP',
+            question:'Instansi Anda mengadopsi sistem kerja hybrid (WFH dan WFO) yang baru diterapkan. Anda mendapati produktivitas tim menurun karena sebagian anggota kesulitan beradaptasi dengan koordinasi jarak jauh. Sikap Anda adalah...',
+            options:[{text:'Mengusulkan kembali ke sistem kerja penuh di kantor tanpa evaluasi lebih lanjut',score:2},{text:'Membiarkan kondisi ini berlangsung karena kebijakan dari atasan',score:1},{text:'Menginisiasi evaluasi bersama tim untuk merancang protokol koordinasi jarak jauh yang lebih efektif, seperti check-in rutin dan alat kolaborasi digital',score:5},{text:'Menyalahkan anggota tim yang dianggap kurang disiplin',score:1},{text:'Mengeluh kepada rekan kerja lain tanpa mengambil tindakan konkret',score:1}],
+            answer:'Menginisiasi evaluasi bersama tim untuk merancang protokol koordinasi jarak jauh yang lebih efektif, seperti check-in rutin dan alat kolaborasi digital',
+            pembahasan:'Inisiatif mengevaluasi dan merancang solusi adaptif terhadap tantangan kerja hybrid menunjukkan kemampuan beradaptasi terhadap perubahan sekaligus orientasi pada perbaikan sistem kerja tim secara konstruktif.'
+        },
+        {
+            category:'TKP',
+            question:'Anda diberi amanah mengelola anggaran kegiatan yang ternyata lebih kecil dari yang direncanakan akibat efisiensi nasional, namun target output kegiatan tetap sama. Sikap Anda adalah...',
+            options:[{text:'Menurunkan kualitas kegiatan tanpa memberi tahu pemangku kepentingan',score:1},{text:'Mengajukan permohonan tambahan anggaran tanpa mencoba efisiensi terlebih dahulu',score:2},{text:'Melakukan kreativitas dan efisiensi perencanaan agar target tetap tercapai dengan anggaran yang ada, serta mengomunikasikan keterbatasan secara transparan',score:5},{text:'Membatalkan kegiatan secara sepihak',score:1},{text:'Menyerahkan sepenuhnya masalah ini kepada atasan tanpa solusi alternatif',score:2}],
+            answer:'Melakukan kreativitas dan efisiensi perencanaan agar target tetap tercapai dengan anggaran yang ada, serta mengomunikasikan keterbatasan secara transparan',
+            pembahasan:'Kreativitas dalam efisiensi anggaran disertai komunikasi transparan mengenai keterbatasan sumber daya mencerminkan orientasi pada hasil sekaligus akuntabilitas dan profesionalisme dalam pengelolaan sumber daya publik.'
+        },
+        {
+            category:'TKP',
+            question:'Dalam rapat koordinasi, atasan Anda mengambil keputusan yang menurut analisis Anda berisiko tinggi dan berpotensi merugikan organisasi dalam jangka panjang. Sikap Anda adalah...',
+            options:[{text:'Diam saja karena bukan wewenang Anda untuk berpendapat',score:1},{text:'Menyampaikan keberatan secara terbuka di depan forum dengan nada tinggi',score:2},{text:'Menyampaikan analisis risiko secara objektif dan konstruktif kepada atasan, baik dalam forum maupun secara personal jika diperlukan',score:5},{text:'Menuruti keputusan tanpa memberi masukan apapun meski yakin itu keliru',score:2},{text:'Membicarakan keberatan Anda hanya kepada rekan kerja tanpa menyampaikannya ke atasan',score:1}],
+            answer:'Menyampaikan analisis risiko secara objektif dan konstruktif kepada atasan, baik dalam forum maupun secara personal jika diperlukan',
+            pembahasan:'Menyampaikan masukan berbasis data secara konstruktif kepada atasan menunjukkan keberanian profesional dan tanggung jawab terhadap keberlangsungan organisasi, tanpa mengorbankan etika komunikasi hierarkis yang baik.'
+        },
+        {
+            category:'TKP',
+            question:'Anda ditugaskan berkolaborasi dengan instansi lain yang memiliki budaya kerja dan birokrasi berbeda, sehingga proses koordinasi menjadi lambat dan sering terjadi miskomunikasi. Sikap Anda adalah...',
+            options:[{text:'Menyalahkan instansi lain atas lambatnya proses',score:1},{text:'Menyerah dan menunggu instansi lain menyesuaikan diri',score:1},{text:'Mempelajari pola kerja instansi tersebut dan mengusulkan mekanisme komunikasi bersama yang lebih efektif untuk kedua belah pihak',score:5},{text:'Menghindari kolaborasi lebih lanjut sebisa mungkin',score:2},{text:'Menyelesaikan seluruh pekerjaan sendiri tanpa melibatkan instansi lain',score:2}],
+            answer:'Mempelajari pola kerja instansi tersebut dan mengusulkan mekanisme komunikasi bersama yang lebih efektif untuk kedua belah pihak',
+            pembahasan:'Kemauan memahami perbedaan budaya kerja lintas instansi dan mengusulkan solusi komunikasi bersama mencerminkan kemampuan membangun jejaring kerja dan kepekaan sosial budaya yang tinggi.'
+        },
+        {
+            category:'TKP',
+            question:'Sebagai pengelola media sosial resmi instansi, Anda menerima banyak komentar negatif dan kritik tajam dari masyarakat terkait kebijakan yang baru diterapkan. Sikap Anda adalah...',
+            options:[{text:'Menghapus seluruh komentar negatif tersebut',score:1},{text:'Membalas komentar dengan nada defensif dan emosional',score:1},{text:'Menyaring masukan yang konstruktif untuk disampaikan ke pimpinan, sambil memberikan klarifikasi informasi secara profesional dan tetap terbuka terhadap kritik',score:5},{text:'Mengabaikan seluruh komentar tanpa respons apapun',score:2},{text:'Menonaktifkan sementara kolom komentar tanpa penjelasan',score:2}],
+            answer:'Menyaring masukan yang konstruktif untuk disampaikan ke pimpinan, sambil memberikan klarifikasi informasi secara profesional dan tetap terbuka terhadap kritik',
+            pembahasan:'Merespons kritik publik secara profesional sekaligus menyaring masukan konstruktif untuk perbaikan kebijakan mencerminkan pelayanan publik yang transparan dan orientasi pada perbaikan berkelanjutan.'
+        },
+        {
+            category:'TKP',
+            question:'Anda baru dipindahtugaskan ke unit kerja baru dengan sistem kerja dan aplikasi yang sama sekali berbeda dari sebelumnya, sementara Anda dituntut segera produktif. Sikap Anda adalah...',
+            options:[{text:'Menunggu pelatihan resmi sebelum mulai bekerja sama sekali',score:2},{text:'Mengeluh kepada rekan kerja tentang sulitnya beradaptasi',score:1},{text:'Mempelajari sistem secara mandiri, aktif bertanya kepada rekan kerja, dan segera menyesuaikan diri sambil tetap berkontribusi semaksimal mungkin',score:5},{text:'Meminta ditempatkan kembali ke unit lama',score:1},{text:'Bekerja seadanya tanpa berusaha memahami sistem baru',score:1}],
+            answer:'Mempelajari sistem secara mandiri, aktif bertanya kepada rekan kerja, dan segera menyesuaikan diri sambil tetap berkontribusi semaksimal mungkin',
+            pembahasan:'Sikap proaktif belajar mandiri sekaligus terbuka bertanya kepada rekan kerja menunjukkan kemampuan adaptasi tinggi dan orientasi pada kontribusi nyata meski dalam situasi baru yang menantang.'
+        },
+        {
+            category:'TKP',
+            question:'Dalam proses pengadaan barang, seorang vendor menawarkan komisi pribadi kepada Anda agar produknya dipilih meski secara kualitas dan harga bukan yang terbaik. Sikap Anda adalah...',
+            options:[{text:'Menerima tawaran tersebut karena jumlahnya kecil dan tidak akan ketahuan',score:1},{text:'Menolak secara tegas dan melaporkan upaya tersebut sesuai prosedur pengadaan yang berlaku',score:5},{text:'Menerima namun tetap memilih vendor terbaik agar terlihat adil',score:1},{text:'Menolak namun tidak melaporkannya kepada siapapun',score:3},{text:'Meminta rekan kerja lain untuk menerima tawaran tersebut atas nama Anda',score:1}],
+            answer:'Menolak secara tegas dan melaporkan upaya tersebut sesuai prosedur pengadaan yang berlaku',
+            pembahasan:'Integritas menuntut penolakan tegas terhadap segala bentuk gratifikasi, disertai pelaporan sesuai prosedur, untuk menjaga transparansi dan akuntabilitas proses pengadaan barang dan jasa pemerintah.'
+        },
+        {
+            category:'TKP',
+            question:'Anda memimpin sebuah tim yang terdiri dari anggota lintas generasi dengan gaya kerja yang sangat berbeda—generasi senior yang menyukai komunikasi formal dan generasi muda yang terbiasa dengan komunikasi digital cepat. Sikap Anda adalah...',
+            options:[{text:'Memaksa seluruh tim mengikuti gaya komunikasi Anda sendiri',score:1},{text:'Membiarkan masing-masing bekerja sendiri-sendiri tanpa penyelarasan',score:1},{text:'Merancang mekanisme komunikasi tim yang mengakomodasi kedua gaya, misalnya kombinasi rapat formal dan grup diskusi digital',score:5},{text:'Hanya mengikuti gaya komunikasi generasi senior karena dianggap lebih senior',score:2},{text:'Hanya mengikuti gaya komunikasi generasi muda karena dianggap lebih efisien',score:2}],
+            answer:'Merancang mekanisme komunikasi tim yang mengakomodasi kedua gaya, misalnya kombinasi rapat formal dan grup diskusi digital',
+            pembahasan:'Merancang mekanisme komunikasi yang mengakomodasi keberagaman gaya kerja lintas generasi mencerminkan kepemimpinan inklusif dan kemampuan mengelola perbedaan demi efektivitas tim secara keseluruhan.'
+        },
+        {
+            category:'TKP',
+            question:'Anda mendapati kebijakan baru dari pimpinan pusat yang menurut Anda kurang sesuai dengan kondisi riil di lapangan tempat Anda bertugas. Sikap Anda adalah...',
+            options:[{text:'Menolak melaksanakan kebijakan tersebut secara terang-terangan',score:1},{text:'Melaksanakan kebijakan apa adanya tanpa memberikan umpan balik apapun',score:2},{text:'Melaksanakan kebijakan sambil menyusun laporan berbasis data mengenai tantangan implementasi di lapangan sebagai bahan evaluasi kebijakan',score:5},{text:'Mengabaikan kebijakan tersebut secara diam-diam',score:1},{text:'Mengeluhkan kebijakan tersebut kepada media tanpa melalui jalur internal',score:1}],
+            answer:'Melaksanakan kebijakan sambil menyusun laporan berbasis data mengenai tantangan implementasi di lapangan sebagai bahan evaluasi kebijakan',
+            pembahasan:'Tetap melaksanakan kebijakan sesuai kewenangan sambil memberikan umpan balik berbasis data melalui jalur yang tepat mencerminkan profesionalisme dan kontribusi konstruktif terhadap penyempurnaan kebijakan tanpa insubordinasi.'
+        },
+        {
+            category:'TKP',
+            question:'Tim Anda gagal mencapai target kinerja triwulan meski telah bekerja keras, akibat faktor eksternal yang di luar kendali seperti perubahan regulasi mendadak. Sikap Anda sebagai ketua tim saat melapor ke atasan adalah...',
+            options:[{text:'Menyalahkan sepenuhnya faktor eksternal tanpa refleksi internal',score:2},{text:'Menutupi kegagalan tersebut agar tim terlihat baik',score:1},{text:'Melaporkan secara jujur disertai analisis faktor penyebab dan rencana mitigasi ke depan',score:5},{text:'Menyalahkan salah satu anggota tim sebagai kambing hitam',score:1},{text:'Diam dan berharap atasan tidak menyadari kegagalan tersebut',score:1}],
+            answer:'Melaporkan secara jujur disertai analisis faktor penyebab dan rencana mitigasi ke depan',
+            pembahasan:'Pelaporan yang jujur dan disertai analisis konstruktif serta rencana perbaikan ke depan mencerminkan akuntabilitas dan orientasi pada perbaikan berkelanjutan, bukan sekadar mencari pembenaran atau menutupi masalah.'
+        },
+        {
+            category:'TKP',
+            question:'Anda diminta menjadi mentor bagi CPNS baru yang memiliki latar belakang pendidikan sangat berbeda dari bidang tugas sehari-hari, sehingga membutuhkan waktu adaptasi lebih lama. Sikap Anda adalah...',
+            options:[{text:'Menyerahkan sepenuhnya proses belajar kepada CPNS baru tersebut tanpa pendampingan',score:1},{text:'Menunjukkan sikap tidak sabar karena dianggap memperlambat pekerjaan tim',score:1},{text:'Menyusun rencana pembimbingan bertahap yang disesuaikan dengan kecepatan belajarnya, disertai evaluasi berkala',score:5},{text:'Meminta CPNS tersebut dipindahkan ke unit lain yang lebih sesuai',score:2},{text:'Memberikan seluruh materi sekaligus tanpa pendampingan bertahap',score:2}],
+            answer:'Menyusun rencana pembimbingan bertahap yang disesuaikan dengan kecepatan belajarnya, disertai evaluasi berkala',
+            pembahasan:'Membimbing secara bertahap dan sistematis dengan mempertimbangkan kecepatan belajar individu mencerminkan orientasi pelayanan terhadap pengembangan SDM dan kesabaran profesional dalam membangun kapasitas tim.'
+        },
+        {
+            category:'TKP',
+            question:'Anda menemukan celah dalam sistem informasi kantor yang berpotensi disalahgunakan untuk kepentingan pribadi tanpa terdeteksi. Sikap Anda adalah...',
+            options:[{text:'Memanfaatkan celah tersebut selagi ada kesempatan',score:1},{text:'Membiarkan saja karena bukan tanggung jawab Anda',score:1},{text:'Segera melaporkan temuan tersebut kepada pihak IT dan atasan agar segera diperbaiki',score:5},{text:'Memberitahu rekan dekat saja tanpa melaporkannya secara resmi',score:2},{text:'Menunggu hingga terjadi masalah nyata baru melaporkannya',score:2}],
+            answer:'Segera melaporkan temuan tersebut kepada pihak IT dan atasan agar segera diperbaiki',
+            pembahasan:'Pelaporan segera atas celah keamanan sistem mencerminkan integritas dan tanggung jawab menjaga aset serta kepentingan organisasi, mencegah potensi penyalahgunaan sebelum benar-benar terjadi.'
+        },
+        {
+            category:'TKP',
+            question:'Dalam sebuah negosiasi anggaran dengan unit lain yang membutuhkan sumber daya yang sama dengan unit Anda, situasi menjadi tegang karena masing-masing pihak mempertahankan kepentingannya. Sikap Anda adalah...',
+            options:[{text:'Bersikeras mempertahankan seluruh permintaan unit Anda tanpa kompromi',score:2},{text:'Mengalah sepenuhnya demi menghindari konflik meski merugikan unit Anda',score:2},{text:'Mencari solusi win-win melalui data kebutuhan riil masing-masing unit dan prioritas organisasi secara keseluruhan',score:5},{text:'Melibatkan pihak ketiga untuk memihak unit Anda secara tidak adil',score:1},{text:'Menunda negosiasi tanpa batas waktu yang jelas',score:1}],
+            answer:'Mencari solusi win-win melalui data kebutuhan riil masing-masing unit dan prioritas organisasi secara keseluruhan',
+            pembahasan:'Pendekatan berbasis data dan prioritas organisasi untuk mencapai solusi win-win mencerminkan kematangan dalam bernegosiasi dan orientasi pada kepentingan organisasi secara keseluruhan, bukan sekadar ego sektoral.'
+        },
+        {
+            category:'TKP',
+            question:'Anda diberi tanggung jawab menangani keluhan masyarakat yang marah karena pelayanan yang lambat, meski keterlambatan tersebut disebabkan oleh sistem yang berada di luar kendali Anda. Sikap Anda adalah...',
+            options:[{text:'Menyalahkan sistem sepenuhnya kepada masyarakat tanpa empati',score:1},{text:'Bersikap defensif dan membalas kemarahan masyarakat',score:1},{text:'Mendengarkan keluhan dengan empati, menjelaskan situasi secara transparan, dan menawarkan solusi atau estimasi waktu penyelesaian yang realistis',score:5},{text:'Menghindari masyarakat yang komplain',score:1},{text:'Meminta masyarakat menunggu tanpa penjelasan apapun',score:2}],
+            answer:'Mendengarkan keluhan dengan empati, menjelaskan situasi secara transparan, dan menawarkan solusi atau estimasi waktu penyelesaian yang realistis',
+            pembahasan:'Empati dalam mendengarkan keluhan disertai transparansi dan solusi konkret mencerminkan orientasi pelayanan publik yang prima meski dalam keterbatasan sistem yang berada di luar kendali langsung.'
+        },
+        {
+            category:'TKP',
+            question:'Anda mengetahui bahwa atasan langsung Anda melakukan praktik yang berpotensi melanggar kode etik, namun Anda khawatir posisi Anda terancam jika melaporkannya. Sikap paling tepat adalah...',
+            options:[{text:'Diam saja demi keamanan posisi Anda',score:1},{text:'Menyebarkan informasi tersebut ke rekan kerja tanpa bukti yang jelas',score:1},{text:'Mengumpulkan bukti yang memadai dan melaporkan melalui saluran pengaduan resmi (whistleblowing system) yang menjamin perlindungan pelapor',score:5},{text:'Mengancam atasan agar menghentikan praktik tersebut secara personal',score:1},{text:'Mengundurkan diri tanpa melaporkan apapun',score:2}],
+            answer:'Mengumpulkan bukti yang memadai dan melaporkan melalui saluran pengaduan resmi (whistleblowing system) yang menjamin perlindungan pelapor',
+            pembahasan:'Melaporkan pelanggaran melalui mekanisme resmi yang menjamin perlindungan pelapor (whistleblower protection) mencerminkan integritas tinggi tanpa mengabaikan aspek keamanan dan prosedur yang sah.'
+        },
+        {
+            category:'TKP',
+            question:'Sebuah kebijakan efisiensi mengharuskan pemangkasan sejumlah program kerja, termasuk program yang selama ini menjadi tanggung jawab langsung Anda dan telah menunjukkan hasil baik. Sikap Anda adalah...',
+            options:[{text:'Menolak kebijakan tersebut secara terbuka dan tidak kooperatif',score:1},{text:'Diam-diam tetap menjalankan program tersebut tanpa persetujuan',score:1},{text:'Menerima kebijakan secara profesional, menyampaikan data capaian program sebagai bahan pertimbangan, dan tetap mendukung prioritas organisasi',score:5},{text:'Menyalahkan pimpinan atas keputusan tersebut kepada rekan kerja',score:2},{text:'Kehilangan motivasi kerja secara keseluruhan',score:1}],
+            answer:'Menerima kebijakan secara profesional, menyampaikan data capaian program sebagai bahan pertimbangan, dan tetap mendukung prioritas organisasi',
+            pembahasan:'Menerima keputusan organisasi secara profesional sambil tetap menyampaikan data sebagai masukan konstruktif mencerminkan loyalitas terhadap organisasi tanpa kehilangan sikap kritis yang membangun.'
+        },
+        {
+            category:'TKP',
+            question:'Anda ditugaskan menyusun laporan gabungan dari beberapa unit kerja, namun salah satu unit terlambat menyerahkan data hingga tenggat sudah sangat dekat. Sikap Anda adalah...',
+            options:[{text:'Menyerahkan laporan tanpa data dari unit yang terlambat',score:2},{text:'Menunggu tanpa batas hingga data tersebut diserahkan',score:1},{text:'Segera menghubungi unit tersebut untuk mempercepat, sambil menyiapkan opsi cadangan seperti estimasi sementara yang jelas ditandai jika data benar-benar tidak dapat dipenuhi tepat waktu',score:5},{text:'Melaporkan keterlambatan tersebut kepada atasan tanpa berupaya mencari solusi',score:2},{text:'Membuat data sendiri tanpa konfirmasi dari unit terkait',score:1}],
+            answer:'Segera menghubungi unit tersebut untuk mempercepat, sambil menyiapkan opsi cadangan seperti estimasi sementara yang jelas ditandai jika data benar-benar tidak dapat dipenuhi tepat waktu',
+            pembahasan:'Kombinasi antara upaya proaktif mempercepat proses dan penyiapan opsi cadangan yang transparan mencerminkan manajemen risiko yang baik serta orientasi pada ketepatan waktu tanpa mengorbankan akurasi data.'
+        },
+        {
+            category:'TKP',
+            question:'Anda diberi kepercayaan mengelola dana kegiatan yang cukup besar. Di tengah pelaksanaan, muncul kebutuhan mendesak yang tidak dianggarkan sebelumnya namun krusial bagi keberhasilan kegiatan. Sikap Anda adalah...',
+            options:[{text:'Menggunakan dana dari pos lain tanpa persetujuan dan pencatatan yang jelas',score:1},{text:'Mengabaikan kebutuhan tersebut meski krusial bagi keberhasilan kegiatan',score:2},{text:'Mengajukan permohonan realokasi anggaran secara resmi dengan justifikasi yang jelas kepada pihak berwenang',score:5},{text:'Menggunakan dana pribadi tanpa melaporkannya',score:2},{text:'Membatalkan kegiatan karena keterbatasan anggaran',score:1}],
+            answer:'Mengajukan permohonan realokasi anggaran secara resmi dengan justifikasi yang jelas kepada pihak berwenang',
+            pembahasan:'Mengajukan realokasi anggaran secara resmi dengan justifikasi yang transparan mencerminkan akuntabilitas pengelolaan keuangan negara sekaligus fleksibilitas dalam merespons kebutuhan mendesak secara sah.'
+        },
+        {
+            category:'TKP',
+            question:'Anda mendapati bahwa salah satu rekan kerja secara konsisten mengambil kredit atas pekerjaan tim yang sebenarnya dikerjakan bersama-sama. Sikap Anda adalah...',
+            options:[{text:'Membalas dengan melakukan hal yang sama pada kesempatan lain',score:1},{text:'Diam saja dan membiarkan hal tersebut terus terjadi',score:2},{text:'Berbicara langsung dan asertif kepada rekan tersebut, serta memastikan kontribusi tim tercatat secara transparan di laporan resmi',score:5},{text:'Mengadukan langsung ke atasan tanpa berbicara terlebih dahulu',score:3},{text:'Menyebarkan ketidakpuasan tersebut ke rekan kerja lain',score:1}],
+            answer:'Berbicara langsung dan asertif kepada rekan tersebut, serta memastikan kontribusi tim tercatat secara transparan di laporan resmi',
+            pembahasan:'Komunikasi asertif langsung kepada yang bersangkutan disertai memastikan transparansi kontribusi dalam dokumentasi resmi mencerminkan penyelesaian konflik yang matang dan menjaga keadilan dalam tim kerja.'
+        },
+        {
+            category:'TKP',
+            question:'Instansi Anda menerapkan sistem digitalisasi arsip yang mengharuskan seluruh pegawai, termasuk yang senior dan kurang familiar dengan teknologi, beralih sepenuhnya dari sistem manual. Sebagai bagian dari tim implementasi, sikap Anda adalah...',
+            options:[{text:'Memaksa seluruh pegawai untuk langsung menggunakan sistem baru tanpa pendampingan',score:1},{text:'Membiarkan pegawai senior tetap menggunakan sistem manual selamanya',score:2},{text:'Menyusun program pelatihan bertahap dan pendampingan khusus bagi pegawai yang membutuhkan waktu adaptasi lebih lama',score:5},{text:'Mengabaikan kebutuhan pegawai senior demi kecepatan implementasi',score:1},{text:'Menunda seluruh implementasi hingga semua pegawai siap tanpa batas waktu',score:2}],
+            answer:'Menyusun program pelatihan bertahap dan pendampingan khusus bagi pegawai yang membutuhkan waktu adaptasi lebih lama',
+            pembahasan:'Program pelatihan bertahap dan pendampingan khusus menunjukkan kepekaan terhadap perbedaan kemampuan adaptasi teknologi antarpegawai, sekaligus tetap mendorong transformasi digital secara efektif dan inklusif.'
+        },
+        {
+            category:'TKP',
+            question:'Anda sedang menyelesaikan tugas penting ketika tiba-tiba diminta atasan untuk segera menangani tugas mendesak lain yang juga penting. Sikap Anda adalah...',
+            options:[{text:'Menolak tugas baru karena sedang sibuk',score:1},{text:'Mengerjakan keduanya secara asal-asalan agar sama-sama selesai',score:1},{text:'Mengomunikasikan kondisi kepada atasan untuk menentukan prioritas bersama, lalu fokus menyelesaikan sesuai kesepakatan',score:5},{text:'Mengabaikan tugas lama tanpa pemberitahuan kepada siapapun',score:2},{text:'Meminta rekan kerja mengerjakan salah satu tugas tanpa koordinasi dengan atasan',score:2}],
+            answer:'Mengomunikasikan kondisi kepada atasan untuk menentukan prioritas bersama, lalu fokus menyelesaikan sesuai kesepakatan',
+            pembahasan:'Komunikasi terbuka dengan atasan untuk menentukan prioritas bersama mencerminkan manajemen waktu yang matang dan transparansi dalam menghadapi beban kerja ganda, tanpa mengorbankan kualitas pekerjaan.'
+        },
+        {
+            category:'TKP',
+            question:'Anda ditempatkan di daerah 3T (terdepan, terluar, tertinggal) dengan fasilitas yang sangat terbatas dibanding penempatan sebelumnya di kota besar. Sikap Anda adalah...',
+            options:[{text:'Mengajukan pengunduran diri karena fasilitas tidak memadai',score:1},{text:'Bekerja seadanya tanpa berusaha memberikan kontribusi maksimal',score:1},{text:'Menyesuaikan diri dengan kondisi setempat dan tetap berkontribusi maksimal dengan memanfaatkan sumber daya yang tersedia secara kreatif',score:5},{text:'Terus mengeluh kepada rekan kerja tentang keterbatasan fasilitas',score:2},{text:'Meminta pindah tugas secara terus-menerus tanpa menjalankan tugas dengan baik',score:1}],
+            answer:'Menyesuaikan diri dengan kondisi setempat dan tetap berkontribusi maksimal dengan memanfaatkan sumber daya yang tersedia secara kreatif',
+            pembahasan:'Adaptasi terhadap keterbatasan sumber daya sambil tetap berkontribusi maksimal secara kreatif mencerminkan dedikasi dan semangat pengabdian ASN, sejalan dengan komitmen melayani di seluruh wilayah NKRI tanpa terkecuali.'
+        },
+        {
+            category:'TKP',
+            question:'Anda menjadi juru bicara instansi dalam konferensi pers terkait insiden yang merugikan sebagian masyarakat akibat kelalaian internal. Sikap Anda adalah...',
+            options:[{text:'Menyangkal seluruh kesalahan demi menjaga citra instansi',score:1},{text:'Menyalahkan pihak lain sepenuhnya untuk menghindari tanggung jawab',score:1},{text:'Mengakui kesalahan secara jujur, menjelaskan langkah perbaikan konkret, dan menyampaikan permintaan maaf yang tulus kepada masyarakat terdampak',score:5},{text:'Menghindari pertanyaan wartawan secara defensif',score:2},{text:'Memberikan jawaban normatif tanpa substansi yang jelas',score:2}],
+            answer:'Mengakui kesalahan secara jujur, menjelaskan langkah perbaikan konkret, dan menyampaikan permintaan maaf yang tulus kepada masyarakat terdampak',
+            pembahasan:'Transparansi dan akuntabilitas publik menuntut pengakuan kesalahan secara jujur disertai langkah perbaikan konkret, yang justru memperkuat kepercayaan publik dibanding menutup-nutupi atau menyalahkan pihak lain.'
+        },
+        {
+            category:'TKP',
+            question:'Anda mendapati bahwa kebijakan afirmasi yang mendukung kelompok rentan di lingkungan kerja Anda menimbulkan kecemburuan dari sebagian pegawai lain yang merasa diperlakukan tidak adil. Sikap Anda sebagai pengelola SDM adalah...',
+            options:[{text:'Membatalkan kebijakan afirmasi tersebut demi menghindari konflik',score:1},{text:'Mengabaikan keluhan pegawai lain sepenuhnya',score:2},{text:'Mengedukasi seluruh pegawai mengenai tujuan dan urgensi kebijakan afirmasi, sambil memastikan transparansi proses agar dipahami sebagai upaya pemerataan, bukan diskriminasi',score:5},{text:'Membiarkan konflik antarpegawai berlangsung tanpa intervensi',score:1},{text:'Menghentikan sosialisasi kebijakan agar tidak menimbulkan perdebatan',score:2}],
+            answer:'Mengedukasi seluruh pegawai mengenai tujuan dan urgensi kebijakan afirmasi, sambil memastikan transparansi proses agar dipahami sebagai upaya pemerataan, bukan diskriminasi',
+            pembahasan:'Edukasi dan transparansi mengenai tujuan kebijakan afirmasi penting untuk membangun pemahaman bersama bahwa kebijakan tersebut bertujuan pemerataan kesempatan, bukan diskriminasi terhadap kelompok lain, sehingga mengurangi potensi konflik sosial di lingkungan kerja.'
+        },
+        {
+            category:'TKP',
+            question:'Anda diminta menjadi mediator dalam konflik internal antara dua rekan kerja yang berselisih paham hingga memengaruhi suasana kerja tim secara keseluruhan. Sikap Anda adalah...',
+            options:[{text:'Memihak salah satu pihak yang lebih dekat dengan Anda',score:1},{text:'Mengabaikan konflik tersebut karena bukan urusan Anda',score:1},{text:'Memfasilitasi dialog terbuka antara kedua pihak secara netral untuk mencari akar masalah dan solusi bersama',score:5},{text:'Melaporkan langsung ke atasan tanpa mencoba menyelesaikan di level tim terlebih dahulu',score:2},{text:'Meminta salah satu pihak untuk mengalah tanpa mendengarkan kedua sisi',score:2}],
+            answer:'Memfasilitasi dialog terbuka antara kedua pihak secara netral untuk mencari akar masalah dan solusi bersama',
+            pembahasan:'Fasilitasi dialog netral yang berfokus pada akar masalah mencerminkan kemampuan manajemen konflik yang matang dan menjaga keharmonisan tim tanpa keberpihakan yang dapat memperburuk situasi.'
+        },
+        {
+            category:'TKP',
+            question:'Anda menerima tugas mendadak untuk mewakili instansi dalam forum internasional, meski Anda merasa kurang percaya diri dengan kemampuan bahasa asing Anda. Sikap Anda adalah...',
+            options:[{text:'Menolak tugas tersebut karena merasa tidak mampu',score:1},{text:'Menerima namun tidak mempersiapkan diri sama sekali',score:1},{text:'Menerima tugas tersebut sambil mempersiapkan diri semaksimal mungkin, termasuk berlatih dan mencari dukungan yang diperlukan',score:5},{text:'Meminta rekan lain menggantikan Anda sepenuhnya',score:2},{text:'Menerima dengan setengah hati tanpa persiapan memadai',score:2}],
+            answer:'Menerima tugas tersebut sambil mempersiapkan diri semaksimal mungkin, termasuk berlatih dan mencari dukungan yang diperlukan',
+            pembahasan:'Menerima tantangan baru disertai persiapan maksimal mencerminkan semangat pengembangan diri dan keberanian profesional untuk keluar dari zona nyaman demi kepentingan tugas dan institusi.'
+        },
+        {
+            category:'TKP',
+            question:'Anda menemukan bahwa prosedur kerja yang berlaku saat ini sudah usang dan menghambat efisiensi, namun perubahan prosedur memerlukan persetujuan berjenjang yang panjang. Sikap Anda adalah...',
+            options:[{text:'Mengubah prosedur secara sepihak tanpa persetujuan resmi',score:1},{text:'Membiarkan prosedur usang tersebut terus berjalan tanpa upaya perbaikan',score:1},{text:'Menyusun proposal perbaikan prosedur secara sistematis dan mengajukannya melalui jalur resmi, disertai data pendukung urgensi perubahan',score:5},{text:'Mengeluh tentang prosedur usang tanpa mengambil tindakan konkret',score:2},{text:'Menunggu orang lain yang mengusulkan perubahan tersebut',score:2}],
+            answer:'Menyusun proposal perbaikan prosedur secara sistematis dan mengajukannya melalui jalur resmi, disertai data pendukung urgensi perubahan',
+            pembahasan:'Mengajukan proposal perbaikan secara sistematis melalui jalur resmi mencerminkan inisiatif perbaikan berkelanjutan (continuous improvement) sekaligus kepatuhan terhadap tata kelola organisasi yang berjenjang.'
+        },
+        {
+            category:'TKP',
+            question:'Anda diminta menyampaikan evaluasi kinerja kepada bawahan yang hasilnya kurang memuaskan, padahal Anda tahu bawahan tersebut sedang menghadapi masalah pribadi yang berat. Sikap Anda adalah...',
+            options:[{text:'Menunda evaluasi tanpa batas waktu demi menghindari ketidaknyamanan',score:2},{text:'Menyampaikan evaluasi kinerja seadanya tanpa penjelasan apapun',score:2},{text:'Menyampaikan evaluasi secara jujur namun empatik, memberikan dukungan yang sesuai, dan menyusun rencana perbaikan bersama',score:5},{text:'Mengabaikan masalah pribadinya dan menyampaikan kritik secara keras',score:1},{text:'Memberikan nilai baik meski tidak sesuai kenyataan demi menjaga perasaannya',score:1}],
+            answer:'Menyampaikan evaluasi secara jujur namun empatik, memberikan dukungan yang sesuai, dan menyusun rencana perbaikan bersama',
+            pembahasan:'Kejujuran dalam evaluasi yang diimbangi empati dan dukungan konkret mencerminkan kepemimpinan yang manusiawi sekaligus tetap menjaga standar profesionalisme dan akuntabilitas kinerja organisasi.'
+        },
+        {
+            category:'TKP',
+            question:'Anda menyadari bahwa target kinerja individu Anda tercapai, namun hal ini disebabkan oleh kontribusi besar dari tim, bukan semata usaha pribadi Anda. Saat momen apresiasi, sikap Anda adalah...',
+            options:[{text:'Menerima pujian sepenuhnya sebagai pencapaian pribadi',score:1},{text:'Menolak apresiasi sama sekali karena merasa tidak layak',score:2},{text:'Menerima apresiasi dengan rendah hati sambil secara terbuka mengakui dan menghargai kontribusi seluruh anggota tim',score:5},{text:'Diam saja tanpa memberikan klarifikasi apapun',score:2},{text:'Menyalahkan diri sendiri karena merasa tidak pantas menerima pujian',score:1}],
+            answer:'Menerima apresiasi dengan rendah hati sambil secara terbuka mengakui dan menghargai kontribusi seluruh anggota tim',
+            pembahasan:'Mengakui kontribusi tim secara terbuka saat menerima apresiasi pribadi mencerminkan kerendahan hati dan semangat kerja sama tim yang sehat, memperkuat soliditas dan motivasi kolektif ke depannya.'
+        },
+        {
+            category:'TKP',
+            question:'Anda mendapati anggaran pelatihan pengembangan kompetensi pegawai dipangkas signifikan tahun ini, padahal kebutuhan peningkatan kapasitas SDM sangat mendesak untuk menghadapi transformasi digital. Sikap Anda adalah...',
+            options:[{text:'Membatalkan seluruh rencana pengembangan kompetensi tahun ini',score:1},{text:'Mengeluhkan pemangkasan anggaran tanpa mencari solusi alternatif',score:1},{text:'Mencari alternatif pengembangan kompetensi berbiaya rendah seperti pelatihan internal, mentoring, atau platform belajar daring gratis',score:5},{text:'Meminta pegawai membiayai sendiri seluruh pelatihan yang dibutuhkan',score:2},{text:'Menunda pengembangan kompetensi hingga anggaran kembali normal tanpa batas waktu',score:2}],
+            answer:'Mencari alternatif pengembangan kompetensi berbiaya rendah seperti pelatihan internal, mentoring, atau platform belajar daring gratis',
+            pembahasan:'Kreativitas mencari alternatif pengembangan kompetensi berbiaya rendah menunjukkan orientasi pada hasil dan pemecahan masalah yang efisien, tanpa mengorbankan tujuan strategis peningkatan kapasitas SDM meski dalam keterbatasan anggaran.'
+        },
+        {
+            category:'TKP',
+            question:'Dalam sebuah proyek bersama, Anda menyadari bahwa kontribusi salah satu anggota tim jauh di bawah standar dan mulai memengaruhi kualitas hasil kerja tim secara keseluruhan. Sikap Anda adalah...',
+            options:[{text:'Mengambil alih seluruh tugasnya tanpa berbicara dengannya terlebih dahulu',score:2},{text:'Membiarkan kondisi tersebut demi menghindari konflik',score:1},{text:'Berbicara secara pribadi untuk memahami kendala yang dihadapinya, menawarkan bantuan atau penyesuaian tugas, dan menetapkan ekspektasi yang jelas ke depan',score:5},{text:'Melaporkan kinerjanya kepada atasan tanpa berbicara langsung terlebih dahulu',score:2},{text:'Mengkritiknya secara terbuka di depan tim lainnya',score:1}],
+            answer:'Berbicara secara pribadi untuk memahami kendala yang dihadapinya, menawarkan bantuan atau penyesuaian tugas, dan menetapkan ekspektasi yang jelas ke depan',
+            pembahasan:'Pendekatan personal untuk memahami akar masalah sebelum mengambil tindakan lebih lanjut mencerminkan kepemimpinan yang suportif sekaligus tegas dalam menjaga standar kualitas kerja tim secara konstruktif.'
+        },
+        {
+            category:'TKP',
+            question:'Anda ditugaskan menyusun kebijakan yang harus mengakomodasi kepentingan berbagai kelompok masyarakat dengan pandangan yang saling bertentangan. Sikap Anda adalah...',
+            options:[{text:'Memilih hanya mengakomodasi kelompok yang paling vokal',score:2},{text:'Menghindari penyusunan kebijakan karena terlalu kompleks',score:1},{text:'Melakukan konsultasi publik yang inklusif dari seluruh kelompok terkait untuk merumuskan kebijakan yang seimbang dan berbasis data',score:5},{text:'Menyusun kebijakan berdasarkan pendapat pribadi tanpa konsultasi',score:1},{text:'Menunda penyusunan kebijakan tanpa batas waktu yang jelas',score:2}],
+            answer:'Melakukan konsultasi publik yang inklusif dari seluruh kelompok terkait untuk merumuskan kebijakan yang seimbang dan berbasis data',
+            pembahasan:'Konsultasi publik yang inklusif dan berbasis data mencerminkan prinsip good governance dalam perumusan kebijakan yang mengakomodasi kepentingan majemuk secara adil dan berimbang.'
+        },
+        {
+            category:'TKP',
+            question:'Anda melihat rekan kerja mengalami tekanan kerja berlebihan (burnout) hingga memengaruhi kesehatan mentalnya, namun ia enggan mengakui atau meminta bantuan. Sikap Anda adalah...',
+            options:[{text:'Mengabaikan kondisinya karena bukan tanggung jawab Anda',score:1},{text:'Memaksanya untuk segera cuti tanpa mendengarkan pendapatnya',score:2},{text:'Mendekatinya secara personal dengan empati, menawarkan dukungan, dan mendorongnya untuk memanfaatkan layanan konseling atau berbicara dengan atasan jika diperlukan',score:5},{text:'Membicarakan kondisinya kepada rekan kerja lain tanpa sepengetahuannya',score:1},{text:'Menyuruhnya untuk lebih tangguh dan tidak mengeluh',score:1}],
+            answer:'Mendekatinya secara personal dengan empati, menawarkan dukungan, dan mendorongnya untuk memanfaatkan layanan konseling atau berbicara dengan atasan jika diperlukan',
+            pembahasan:'Kepedulian personal yang empatik disertai dorongan untuk mencari bantuan profesional mencerminkan kepekaan sosial dan kepedulian terhadap kesejahteraan rekan kerja sebagai bagian dari lingkungan kerja yang sehat.'
+        },
+        {
+            category:'TKP',
+            question:'Anda diberi tugas untuk memimpin transformasi digitalisasi layanan yang akan mengubah signifikan cara kerja seluruh pegawai, dan Anda memperkirakan akan ada resistensi besar dari sebagian pegawai. Langkah pertama Anda adalah...',
+            options:[{text:'Langsung menerapkan sistem baru secara paksa tanpa sosialisasi',score:1},{text:'Menunda implementasi hingga seluruh pegawai setuju tanpa kecuali',score:2},{text:'Melakukan sosialisasi bertahap, melibatkan pegawai dalam proses perancangan, dan menjelaskan manfaat perubahan secara transparan',score:5},{text:'Mengabaikan kekhawatiran pegawai dan fokus pada implementasi teknis semata',score:1},{text:'Menerapkan sistem baru hanya pada sebagian kecil pegawai yang setuju',score:2}],
+            answer:'Melakukan sosialisasi bertahap, melibatkan pegawai dalam proses perancangan, dan menjelaskan manfaat perubahan secara transparan',
+            pembahasan:'Sosialisasi bertahap dan pelibatan pegawai dalam proses perancangan perubahan (change management) terbukti paling efektif mengurangi resistensi dan meningkatkan penerimaan terhadap transformasi organisasi.'
+        },
+        {
+            category:'TKP',
+            question:'Anda mendapati laporan anggaran dari bawahan Anda memiliki kejanggalan kecil yang kemungkinan hanya kesalahan administratif, namun berpotensi menjadi masalah jika tidak diklarifikasi. Sikap Anda adalah...',
+            options:[{text:'Membiarkan saja karena dianggap kesalahan kecil yang tidak signifikan',score:2},{text:'Langsung melaporkan sebagai dugaan kecurangan tanpa konfirmasi terlebih dahulu',score:2},{text:'Mengklarifikasi langsung kepada bawahan tersebut untuk memastikan penyebabnya, dan memperbaikinya sesuai prosedur jika benar merupakan kesalahan administratif',score:5},{text:'Mengabaikan kejanggalan tersebut demi menjaga hubungan baik',score:1},{text:'Menegur bawahan tersebut secara keras di depan rekan kerja lain',score:1}],
+            answer:'Mengklarifikasi langsung kepada bawahan tersebut untuk memastikan penyebabnya, dan memperbaikinya sesuai prosedur jika benar merupakan kesalahan administratif',
+            pembahasan:'Klarifikasi langsung sebelum mengambil kesimpulan mencerminkan sikap adil dan profesional, sekaligus tetap menjaga kehati-hatian terhadap potensi masalah administratif yang jika dibiarkan dapat berkembang menjadi masalah lebih besar.'
+        },
+        {
+            category:'TKP',
+            question:'Anda ditugaskan menjadi penghubung antara instansi Anda dengan mitra kerja dari sektor swasta yang memiliki orientasi kerja berbasis target dan kecepatan, berbeda dengan ritme kerja birokrasi pada umumnya. Sikap Anda adalah...',
+            options:[{text:'Memaksa mitra swasta mengikuti ritme kerja birokrasi sepenuhnya',score:1},{text:'Mengabaikan perbedaan ritme kerja dan berharap semuanya berjalan lancar dengan sendirinya',score:1},{text:'Menyesuaikan pola komunikasi dan tata waktu kerja agar kolaborasi tetap efektif tanpa mengorbankan prosedur yang berlaku di instansi Anda',score:5},{text:'Menolak bekerja sama dengan mitra swasta karena dianggap terlalu berbeda',score:2},{text:'Sepenuhnya mengikuti ritme kerja mitra swasta meski melanggar prosedur internal',score:2}],
+            answer:'Menyesuaikan pola komunikasi dan tata waktu kerja agar kolaborasi tetap efektif tanpa mengorbankan prosedur yang berlaku di instansi Anda',
+            pembahasan:'Kemampuan menyesuaikan pola kerja lintas sektor tanpa mengorbankan prosedur yang berlaku mencerminkan fleksibilitas profesional dan kemampuan membangun jejaring kerja yang produktif dengan berbagai pihak eksternal.'
+        },
+        {
+            category:'TKP',
+            question:'Anda menemukan bahwa salah satu kebijakan lama di unit kerja Anda sebenarnya sudah tidak relevan dan berpotensi melanggar aturan terbaru, namun kebijakan tersebut sudah berjalan bertahun-tahun tanpa masalah. Sikap Anda adalah...',
+            options:[{text:'Membiarkan kebijakan tersebut karena sudah berjalan lama tanpa masalah',score:2},{text:'Menghentikan kebijakan tersebut secara sepihak tanpa proses yang jelas',score:1},{text:'Melaporkan temuan tersebut kepada pihak berwenang dan mengusulkan penyesuaian kebijakan agar sesuai dengan aturan terbaru',score:5},{text:'Mengabaikan temuan tersebut karena takut dianggap mencari masalah',score:1},{text:'Membicarakannya hanya dengan rekan dekat tanpa tindak lanjut resmi',score:2}],
+            answer:'Melaporkan temuan tersebut kepada pihak berwenang dan mengusulkan penyesuaian kebijakan agar sesuai dengan aturan terbaru',
+            pembahasan:'Melaporkan temuan ketidaksesuaian kebijakan lama dengan aturan terbaru melalui jalur resmi, disertai usulan penyesuaian, mencerminkan kepatuhan terhadap hukum dan inisiatif perbaikan tata kelola meski kebijakan lama telah berjalan lama tanpa insiden.'
+        },
+        {
+            category:'TKP',
+            question:'Anda diminta menyusun kebijakan pengetatan efisiensi anggaran yang berdampak pada pengurangan tunjangan sebagian pegawai, termasuk tim Anda sendiri. Sikap Anda saat menyampaikan kebijakan ini kepada tim adalah...',
+            options:[{text:'Menunda penyampaian kebijakan selama mungkin untuk menghindari kekecewaan tim',score:2},{text:'Menyalahkan pimpinan pusat sepenuhnya di depan tim agar tidak disalahkan',score:1},{text:'Menyampaikan kebijakan secara transparan disertai alasan dan konteksnya, serta membuka ruang diskusi untuk pertanyaan atau masukan tim',score:5},{text:'Menyampaikan kebijakan tanpa penjelasan apapun agar cepat selesai',score:2},{text:'Meminta rekan lain yang menyampaikan kebijakan tersebut agar Anda tidak dibenci',score:1}],
+            answer:'Menyampaikan kebijakan secara transparan disertai alasan dan konteksnya, serta membuka ruang diskusi untuk pertanyaan atau masukan tim',
+            pembahasan:'Transparansi dan keterbukaan ruang dialog saat menyampaikan kebijakan yang tidak populer mencerminkan kepemimpinan yang jujur dan membangun kepercayaan tim, meski kebijakan tersebut berdampak langsung pada mereka.'
+        },
+        {
+            category:'TKP',
+            question:'Anda mendapati bahwa salah satu prosedur pelayanan publik di unit Anda ternyata mempersulit kelompok penyandang disabilitas untuk mengakses layanan secara setara. Sikap Anda adalah...',
+            options:[{text:'Mengabaikan hal tersebut karena prosedur sudah ditetapkan dan berlaku umum',score:1},{text:'Menunggu ada pengaduan resmi sebelum mengambil tindakan',score:2},{text:'Proaktif mengusulkan penyesuaian prosedur dan fasilitas agar lebih inklusif dan mudah diakses oleh penyandang disabilitas',score:5},{text:'Menyarankan penyandang disabilitas untuk diwakilkan orang lain saja',score:2},{text:'Menganggap hal tersebut bukan prioritas utama saat ini',score:1}],
+            answer:'Proaktif mengusulkan penyesuaian prosedur dan fasilitas agar lebih inklusif dan mudah diakses oleh penyandang disabilitas',
+            pembahasan:'Proaktif mengusulkan penyesuaian layanan agar inklusif dan mudah diakses oleh penyandang disabilitas mencerminkan orientasi pelayanan publik yang berkeadilan dan tidak menunggu terjadinya keluhan formal terlebih dahulu.'
+        },
+        {
+            category:'TKP',
+            question:'Dalam rapat evaluasi tahunan, Anda diminta memberikan penilaian jujur terhadap kinerja rekan setingkat yang juga menjadi pesaing Anda dalam promosi jabatan. Sikap Anda adalah...',
+            options:[{text:'Memberikan penilaian rendah agar peluang promosi Anda lebih besar',score:1},{text:'Memberikan penilaian tinggi berlebihan agar terlihat baik hati',score:1},{text:'Memberikan penilaian yang objektif dan berbasis fakta kinerja, terlepas dari kepentingan pribadi Anda dalam promosi',score:5},{text:'Menolak memberikan penilaian karena dianggap konflik kepentingan',score:3},{text:'Memberikan penilaian standar tanpa evaluasi mendalam agar aman',score:2}],
+            answer:'Memberikan penilaian yang objektif dan berbasis fakta kinerja, terlepas dari kepentingan pribadi Anda dalam promosi',
+            pembahasan:'Objektivitas dalam menilai kinerja rekan kerja, terlepas dari kepentingan pribadi, mencerminkan integritas dan profesionalisme tinggi yang menempatkan kepentingan organisasi di atas kepentingan individu.'
+        },
+        {
+            category:'TKP',
+            question:'Anda ditugaskan mengelola media sosial instansi dan mendapati sebuah unggahan internal secara tidak sengaja telah bocor ke publik sebelum waktunya, berpotensi menimbulkan kesalahpahaman. Sikap Anda adalah...',
+            options:[{text:'Menghapus unggahan tersebut tanpa penjelasan apapun kepada publik',score:2},{text:'Membiarkan saja karena berharap tidak ada yang menyadarinya',score:1},{text:'Segera melaporkan ke atasan, menyiapkan klarifikasi yang akurat, dan mengelola komunikasi krisis secara tepat waktu dan transparan',score:5},{text:'Menyalahkan sistem media sosial atas kebocoran tersebut',score:1},{text:'Menunggu instruksi tanpa mengambil langkah proaktif apapun',score:2}],
+            answer:'Segera melaporkan ke atasan, menyiapkan klarifikasi yang akurat, dan mengelola komunikasi krisis secara tepat waktu dan transparan',
+            pembahasan:'Manajemen krisis komunikasi yang cepat, transparan, dan terkoordinasi dengan atasan mencerminkan kesigapan dan tanggung jawab dalam menjaga kredibilitas informasi publik instansi.'
+        },
+        {
+            category:'TKP',
+            question:'Anda melihat adanya potensi efisiensi besar jika dua unit kerja yang selama ini bekerja terpisah dapat digabungkan prosesnya, namun usulan ini akan mengurangi kewenangan salah satu pimpinan unit yang sudah lama menjabat. Sikap Anda adalah...',
+            options:[{text:'Mengurungkan niat mengusulkan demi menjaga hubungan baik dengan pimpinan tersebut',score:2},{text:'Mengusulkan penggabungan secara langsung kepada atasan tanpa melibatkan pimpinan unit terkait',score:2},{text:'Mengusulkan ide tersebut secara profesional disertai data efisiensi, sekaligus melibatkan kedua pimpinan unit dalam diskusi agar prosesnya transparan dan minim resistensi',score:5},{text:'Diam-diam menerapkan sebagian penggabungan tanpa persetujuan resmi',score:1},{text:'Menyerahkan sepenuhnya keputusan kepada pimpinan unit tanpa mengajukan usulan',score:1}],
+            answer:'Mengusulkan ide tersebut secara profesional disertai data efisiensi, sekaligus melibatkan kedua pimpinan unit dalam diskusi agar prosesnya transparan dan minim resistensi',
+            pembahasan:'Mengusulkan perbaikan berbasis data secara transparan dan inklusif, dengan melibatkan pihak-pihak terdampak, mencerminkan orientasi pada hasil organisasi secara keseluruhan tanpa mengabaikan dinamika politik internal secara bijaksana.'
+        },
+    ];
+
+    let fullQuizData = [];
+
+    function buildFullQuiz() {
+        const resultData = JSON.parse(JSON.stringify(masterHotsData));
+        resultData.forEach((q) => {
+            if (q.category === 'TKP') {
+                const correctAnswerObject = q.options.find(opt => opt.score === 5);
+                if (correctAnswerObject) q.answer = correctAnswerObject.text;
+                shuffleArray(q.options);
+            } else {
+                shuffleArray(q.options);
+            }
+        });
+        return resultData;
+    }
+
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    let currentQuestionIndex = 0;
+    let userAnswers = [];
+    let timerInterval;
+    let timeLeft = 100 * 60;
+
+    const infoPage = document.getElementById('info-page');
+    const examContainer = document.getElementById('exam-container');
+    const resultPage = document.getElementById('result-page');
+
+    document.getElementById('btn-mulai-ujian-sekarang').addEventListener('click', () => {
+        const inputNama = document.getElementById('input-nama-peserta');
+        let namaPeserta = (inputNama && inputNama.value.trim()) ? inputNama.value.trim() : 'Peserta';
+        document.querySelectorAll('.user-name-placeholder').forEach(el => { el.textContent = namaPeserta; });
+        infoPage.classList.add('hidden');
+        examContainer.classList.remove('hidden');
+        startQuiz();
+    });
+
+    function startQuiz() {
+        fullQuizData = buildFullQuiz();
+        userAnswers = new Array(fullQuizData.length).fill(null);
+        currentQuestionIndex = 0;
+        timeLeft = 100 * 60;
+        populateNavGridBkn();
+        loadQuestion(currentQuestionIndex);
+        updateHeaderProgress();
+        startTimer();
+    }
+
+    function populateNavGridBkn() {
+        const grid = document.getElementById('nav-grid-bkn');
+        grid.innerHTML = '';
+        for (let i = 0; i < fullQuizData.length; i++) {
+            const btn = document.createElement('button');
+            btn.textContent = i + 1;
+            btn.classList.add('nav-btn-bkn');
+            btn.id = `nav-btn-${i}`;
+            btn.addEventListener('click', () => loadQuestion(i));
+            grid.appendChild(btn);
+        }
+    }
+
+    function updateNavGridStyles() {
+        for (let i = 0; i < fullQuizData.length; i++) {
+            const btn = document.getElementById(`nav-btn-${i}`);
+            if (btn) {
+                btn.classList.remove('answered', 'current');
+                if (userAnswers[i] !== null) btn.classList.add('answered');
+                if (i === currentQuestionIndex) {
+                    btn.classList.add('current');
+                    btn.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                }
+            }
+        }
+    }
+
+    function loadQuestion(index) {
+        currentQuestionIndex = index;
+        const q = fullQuizData[index];
+        document.getElementById('soal-number-title').textContent = `Soal ${index + 1} dari ${fullQuizData.length}`;
+
+        const badge = document.getElementById('soal-category-badge');
+        if (q.category === 'TWK') { badge.textContent = 'Tes Wawasan Kebangsaan'; badge.className = "bg-violet-600 text-white px-3 py-1 rounded-full text-xs font-bold inline-block"; }
+        else if (q.category === 'TIU') { badge.textContent = 'Tes Intelegensia Umum'; badge.className = "bg-sky-600 text-white px-3 py-1 rounded-full text-xs font-bold inline-block"; }
+        else { badge.textContent = 'Tes Karakteristik Pribadi'; badge.className = "bg-amber-600 text-white px-3 py-1 rounded-full text-xs font-bold inline-block"; }
+
+        document.getElementById('question-text').innerHTML = q.question;
+
+        const optContainer = document.getElementById('options-container');
+        optContainer.innerHTML = '';
+        const optionLetters = ['A', 'B', 'C', 'D', 'E'];
+        const optionsData = (q.category === 'TKP') ? q.options.map(o => o.text) : q.options;
+
+        optionsData.forEach((optText, i) => {
+            const isSelected = userAnswers[index] === optText;
+            const div = document.createElement('div');
+            div.className = `option-item ${isSelected ? 'selected' : ''}`;
+            div.innerHTML = `
+                <input type="radio" name="q-opt" value="${i}" ${isSelected ? 'checked' : ''}>
+                <div class="option-letter">${optionLetters[i]}</div>
+                <div class="option-text">${optText}</div>
+            `;
+            div.addEventListener('click', () => {
+                document.querySelectorAll('.option-item').forEach(el => el.classList.remove('selected'));
+                div.classList.add('selected');
+                userAnswers[currentQuestionIndex] = optText;
+                updateNavGridStyles();
+                updateHeaderProgress();
+            });
+            optContainer.appendChild(div);
+        });
+
+        updateNavGridStyles();
+    }
+
+    function updateHeaderProgress() {
+        const answeredCount = userAnswers.filter(a => a !== null).length;
+        document.getElementById('dijawab-count-header').textContent = answeredCount;
+        document.getElementById('progress-fill').style.width = `${(answeredCount / fullQuizData.length) * 100}%`;
+    }
+
+    function startTimer() {
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                showCustomAlert("WAKTU HABIS!", "Ujian ditutup sistem. Lembar jawaban Anda telah tersimpan.");
+                finishQuiz();
+                return;
+            }
+            timeLeft--;
+            const m = Math.floor(timeLeft / 60);
+            const s = timeLeft % 60;
+            document.getElementById('timer-bkn-text').textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }, 1000);
+    }
+
+    document.getElementById('btn-simpan').addEventListener('click', () => {
+        if (userAnswers[currentQuestionIndex] === null) {
+            showCustomAlert("⚠️ BELUM MENJAWAB", "Silakan pilih salah satu jawaban terlebih dahulu untuk menyimpan dan melanjutkan ke soal berikutnya. Jika ingin melewati soal ini tanpa menjawab, gunakan tombol \"Lewati Soal Ini\".");
+            return;
+        }
+        if (currentQuestionIndex < fullQuizData.length - 1) loadQuestion(currentQuestionIndex + 1);
+        else showCustomConfirm();
+    });
+
+    document.getElementById('btn-lewatkan').addEventListener('click', () => {
+        if (currentQuestionIndex < fullQuizData.length - 1) loadQuestion(currentQuestionIndex + 1);
+    });
+
+    document.getElementById('finish-btn-header').addEventListener('click', () => showCustomConfirm());
+
+    const customAlert = document.getElementById('custom-alert');
+    function showCustomAlert(title, message) {
+        document.getElementById('unanswered-count').textContent = title;
+        document.getElementById('custom-alert-message').textContent = message;
+        document.getElementById('custom-alert-buttons').innerHTML = `<button id="alert-ok" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">Mengerti</button>`;
+        customAlert.classList.remove('hidden');
+        document.getElementById('alert-ok').onclick = document.getElementById('close-alert-btn').onclick = () => customAlert.classList.add('hidden');
+    }
+
+    function showCustomConfirm() {
+        const empty = userAnswers.filter(a => a === null).length;
+        document.getElementById('unanswered-count').textContent = empty > 0 ? `⚠️ PERINGATAN: ${empty} SOAL KOSONG!` : `✅ SEMUA SOAL TERJAWAB!`;
+        document.getElementById('unanswered-count').className = empty > 0 ? "text-red-600 font-black mb-2" : "text-emerald-600 font-black mb-2";
+        document.getElementById('custom-alert-message').textContent = "Yakin akhiri simulasi? Skor akan langsung dikalkulasi.";
+        document.getElementById('custom-alert-buttons').innerHTML = `
+            <button id="btn-batal" class="bg-slate-200 text-slate-800 px-5 py-2.5 rounded-lg font-bold">Cek Kembali</button>
+            <button id="btn-yakin" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-bold shadow-lg">Ya, Akhiri Ujian</button>
+        `;
+        customAlert.classList.remove('hidden');
+        document.getElementById('btn-yakin').onclick = () => { customAlert.classList.add('hidden'); finishQuiz(); };
+        document.getElementById('btn-batal').onclick = document.getElementById('close-alert-btn').onclick = () => customAlert.classList.add('hidden');
+    }
+
+    function finishQuiz() {
+        clearInterval(timerInterval);
+        let twkScore = 0, tiuScore = 0, tkpScore = 0;
+
+        fullQuizData.forEach((q, i) => {
+            const ans = userAnswers[i];
+            if (ans) {
+                if (q.category === 'TWK' || q.category === 'TIU') {
+                    if (ans === q.answer) { q.category === 'TWK' ? twkScore += 5 : tiuScore += 5; }
+                } else if (q.category === 'TKP') {
+                    const originalQ = masterHotsData.find(mq => mq.question === q.question);
+                    const optMatch = originalQ.options.find(o => o.text === ans);
+                    if (optMatch) tkpScore += optMatch.score;
+                }
+            }
+        });
+
+        const total = twkScore + tiuScore + tkpScore;
+        const passTWK = twkScore >= 65, passTIU = tiuScore >= 80, passTKP = tkpScore >= 166;
+        const isLulus = passTWK && passTIU && passTKP;
+
+        document.getElementById('app-total-score').textContent = total;
+
+        setTimeout(() => {
+            document.getElementById('bar-twk').style.width = `${Math.min((twkScore/150)*100, 100)}%`;
+            document.getElementById('bar-tiu').style.width = `${Math.min((tiuScore/175)*100, 100)}%`;
+            document.getElementById('bar-tkp').style.width = `${Math.min((tkpScore/225)*100, 100)}%`;
+        }, 300);
+
+        document.getElementById('app-score-twk').textContent = twkScore;
+        document.getElementById('app-status-twk').textContent = passTWK ? "✓ AMAN" : "✗ GAGAL";
+        document.getElementById('app-status-twk').className = passTWK ? "text-[11px] bg-violet-200 text-violet-800 px-2 py-0.5 rounded font-black" : "text-[11px] bg-red-100 text-red-600 px-2 py-0.5 rounded font-black";
+
+        document.getElementById('app-score-tiu').textContent = tiuScore;
+        document.getElementById('app-status-tiu').textContent = passTIU ? "✓ AMAN" : "✗ GAGAL";
+        document.getElementById('app-status-tiu').className = passTIU ? "text-[11px] bg-sky-200 text-sky-800 px-2 py-0.5 rounded font-black" : "text-[11px] bg-red-100 text-red-600 px-2 py-0.5 rounded font-black";
+
+        document.getElementById('app-score-tkp').textContent = tkpScore;
+        document.getElementById('app-status-tkp').textContent = passTKP ? "✓ AMAN" : "✗ GAGAL";
+        document.getElementById('app-status-tkp').className = passTKP ? "text-[11px] bg-amber-200 text-amber-800 px-2 py-0.5 rounded font-black" : "text-[11px] bg-red-100 text-red-600 px-2 py-0.5 rounded font-black";
+
+        const badge = document.getElementById('app-overall-badge');
+        badge.textContent = isLulus ? "🎉 MEMENUHI AMBANG BATAS" : "⚠️ BELUM MEMENUHI AMBANG BATAS";
+        badge.className = isLulus
+            ? "px-4 py-2 rounded-full text-xs font-black tracking-wide uppercase text-center w-full bg-emerald-100 text-emerald-800 border-2 border-emerald-300 shadow-sm"
+            : "px-4 py-2 rounded-full text-xs font-black tracking-wide uppercase text-center w-full bg-red-100 text-red-800 border-2 border-red-300 shadow-sm";
+
+        examContainer.classList.add('hidden');
+        resultPage.classList.remove('hidden');
+        window.scrollTo(0,0);
+        renderExplanation('all');
+    }
+
+    function renderExplanation(filterType) {
+        const list = document.getElementById('explanation-feed-list');
+        list.innerHTML = '';
+        let displayData = fullQuizData;
+
+        displayData.forEach((q, idx) => {
+            const ans = userAnswers[idx];
+            const oriQ = masterHotsData.find(mq => mq.question === q.question);
+
+            let isBenar = false, skorTkp = 0;
+            if (q.category === 'TKP') {
+                const o = oriQ.options.find(op => op.text === ans);
+                if (o) skorTkp = o.score;
+                isBenar = skorTkp === 5;
+            } else {
+                isBenar = ans === q.answer;
+            }
+
+            if (filterType === 'correct' && !isBenar) return;
+            if (filterType === 'incorrect' && isBenar) return;
+            if (filterType === 'twk' && q.category !== 'TWK') return;
+            if (filterType === 'tiu' && q.category !== 'TIU') return;
+            if (filterType === 'tkp' && q.category !== 'TKP') return;
+
+            const card = document.createElement('div');
+            card.className = `p-5 md:p-6 rounded-2xl border bg-white shadow-sm space-y-4 ${ans === null ? 'border-l-4 border-l-slate-400' : isBenar ? 'border-l-4 border-l-emerald-500' : 'border-l-4 border-l-red-500'}`;
+
+            let badge = ans === null ? `<span class="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-xs font-black uppercase">Kosong (0)</span>`
+                      : q.category === 'TKP' ? `<span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-black uppercase">Skor: ${skorTkp}/5</span>`
+                      : isBenar ? `<span class="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-xs font-black uppercase">Benar (+5)</span>`
+                      : `<span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-black uppercase">Salah (0)</span>`;
+
+            let optionsHTML = '<div class="space-y-2.5 mt-3">';
+            const optionLetters = ['A', 'B', 'C', 'D', 'E'];
+
+            if (q.category === 'TKP') {
+                const maxScore = 5;
+                q.options.forEach((opt, oIdx) => {
+                    const isSelected = (ans === opt.text);
+                    const isCorrect = (opt.score === maxScore);
+                    let optClass = "border-slate-200 bg-white text-slate-700";
+                    let badgeHTML = `<span class="ml-auto text-[11px] font-semibold bg-slate-100 px-2.5 py-1 rounded-full text-slate-500">Skor: ${opt.score}</span>`;
+                    if (isCorrect) { optClass = "border-emerald-500 bg-emerald-50 text-emerald-900 font-semibold shadow-sm"; badgeHTML = `<span class="ml-auto text-[11px] font-extrabold bg-emerald-200 px-2.5 py-1 rounded-full text-emerald-800 flex items-center gap-1">✓ Kunci (Skor 5)</span>`; }
+                    if (isSelected) {
+                        if (isCorrect) { optClass = "border-emerald-500 bg-emerald-50 text-emerald-900 font-semibold shadow-sm ring-2 ring-emerald-400"; badgeHTML = `<span class="ml-auto text-[11px] font-extrabold bg-emerald-200 px-2.5 py-1 rounded-full text-emerald-800 flex items-center gap-1">✓ Pilihan Anda (Skor 5)</span>`; }
+                        else { optClass = "border-red-500 bg-red-50 text-red-950 font-semibold shadow-sm ring-2 ring-red-400"; badgeHTML = `<span class="ml-auto text-[11px] font-extrabold bg-red-200 px-2.5 py-1 rounded-full text-red-800 flex items-center gap-1">✗ Pilihan Anda (Skor ${opt.score})</span>`; }
+                    }
+                    optionsHTML += `<div class="flex items-start md:items-center p-3 border rounded-xl text-sm transition-all ${optClass}"><div class="w-7 h-7 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center font-bold mr-3 shrink-0">${optionLetters[oIdx]}</div><div class="flex-grow pr-2 leading-relaxed text-slate-800">${opt.text}</div>${badgeHTML}</div>`;
+                });
+            } else {
+                q.options.forEach((optStr, oIdx) => {
+                    const isSelected = (ans === optStr);
+                    const isCorrect = (optStr === q.answer);
+                    let optClass = "border-slate-200 bg-white text-slate-700";
+                    let badgeHTML = "";
+                    if (isCorrect) { optClass = "border-emerald-500 bg-emerald-50 text-emerald-900 font-semibold shadow-sm"; badgeHTML = `<span class="ml-auto text-[11px] font-extrabold bg-emerald-200 px-2.5 py-1 rounded-full text-emerald-800 flex items-center gap-1">✓ Kunci Jawaban</span>`; }
+                    if (isSelected) {
+                        if (isCorrect) { optClass = "border-emerald-500 bg-emerald-50 text-emerald-900 font-semibold shadow-sm ring-2 ring-emerald-400"; badgeHTML = `<span class="ml-auto text-[11px] font-extrabold bg-emerald-200 px-2.5 py-1 rounded-full text-emerald-800 flex items-center gap-1">✓ Pilihan Anda (Benar)</span>`; }
+                        else { optClass = "border-red-500 bg-red-50 text-red-950 font-semibold shadow-sm ring-2 ring-red-400"; badgeHTML = `<span class="ml-auto text-[11px] font-extrabold bg-red-200 px-2.5 py-1 rounded-full text-red-800 flex items-center gap-1">✗ Pilihan Anda (Salah)</span>`; }
+                    }
+                    optionsHTML += `<div class="flex items-start md:items-center p-3 border rounded-xl text-sm transition-all ${optClass}"><div class="w-7 h-7 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center font-bold mr-3 shrink-0">${optionLetters[oIdx]}</div><div class="flex-grow pr-2 leading-relaxed text-slate-800">${optStr}</div>${badgeHTML}</div>`;
+                });
+            }
+
+            if (ans === null) {
+                optionsHTML += `<div class="p-3 bg-slate-100 text-slate-600 text-xs font-semibold rounded-xl mt-2 text-center italic border border-dashed border-slate-200">⚠️ Anda Melewatkan Soal Ini (Tidak Menjawab / Kosong)</div>`;
+            }
+            optionsHTML += '</div>';
+
+            card.innerHTML = `
+                <div class="flex justify-between items-center border-b pb-3 border-slate-100">
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-bold text-slate-400">#${idx+1}</span>
+                        <span class="px-2.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600">${q.category}</span>
+                    </div>
+                    ${badge}
+                </div>
+                <div class="text-slate-800 font-medium text-[15px] leading-relaxed">${q.question}</div>
+                <div class="space-y-2 mt-3">
+                    <div class="text-xs font-bold text-slate-400 uppercase">Pilihan Ganda & Analisis:</div>
+                    ${optionsHTML}
+                </div>
+                <div class="mt-4 p-4 md:p-5 bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-600 rounded-r-xl">
+                    <div class="flex items-center gap-1.5 text-blue-800 font-black text-sm uppercase tracking-wider mb-2">💡 Kupas Tuntas HOTS</div>
+                    <p class="text-slate-700 text-sm leading-relaxed text-justify">${oriQ.pembahasan}</p>
+                </div>
+            `;
+            list.appendChild(card);
+        });
+    }
+
+    document.querySelectorAll('#explanation-filters button').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('#explanation-filters button').forEach(b => b.className = 'filter-btn px-4 py-1.5 rounded-lg text-xs font-bold transition bg-white text-slate-600 border border-slate-200 hover:bg-slate-50');
+            e.target.className = 'filter-btn active px-4 py-1.5 rounded-lg text-xs font-bold transition bg-[#1e3a8a] text-white';
+            renderExplanation(e.target.dataset.filter);
+        });
+    });
+
+});
+</script>
+</body>
+</html>
